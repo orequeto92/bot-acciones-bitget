@@ -1,0 +1,79 @@
+name: Bot Acciones Bitget (escaneo en sesion + seguimiento + Telegram)
+
+# Ejecuta en la nube, sin servidor propio:
+#   1) COMANDOS: procesa lo que le mandas por Telegram (/saldo, /parar, /sesion...)
+#   2) SEGUIMIENTO: revisa lo abierto y avisa de TP/SL/break-even/cierre de sesion
+#   3) ESCANEO: busca entradas nuevas y las manda a Telegram
+#   4) Guarda el estado (posiciones + ajustes) en el propio repo
+#
+# CONFIGURACION (una sola vez):
+#   Settings -> Secrets and variables -> Actions -> New repository secret:
+#     TELEGRAM_TOKEN    = token de @BotFather   (un bot NUEVO, no el de cripto)
+#     TELEGRAM_CHAT_ID  = id del canal/grupo (-100...) o @tu_canal
+#
+# POR QUE EL CRON NO ES 24/7
+# --------------------------
+# Este bot solo opera de 9:30 a 16:00 ET. Lanzarlo de madrugada seria quemar
+# minutos de Actions para que el propio bot conteste "mercado cerrado".
+#
+# El cron de GitHub va en UTC y NO entiende de horario de verano, asi que la
+# ventana se fija ancha y el reloj de tools/sesion.py decide de verdad:
+#     sesion 9:30-16:00 ET = 13:30-20:00 UTC en verano (EDT)
+#                          = 14:30-21:00 UTC en invierno (EST)
+# Con 13-21 UTC quedan cubiertos los dos regimenes, mas un margen por los
+# retrasos habituales del cron gratuito.
+#
+# OJO CON LOS MINUTOS: en repo PRIVADO el plan gratis da 2000 min/mes y esto
+# consume mas (~9h/dia x 12 ejecuciones/h x 5 dias). Si lo quieres 24/5 sin
+# pagar, pon el repo en PUBLICO (Actions es ilimitado): aqui no hay nada
+# sensible, las credenciales viven en Secrets y no en el codigo.
+
+on:
+  schedule:
+    - cron: "*/5 13-21 * * 1-5"    # sesion de acciones US (ventana ancha por el DST)
+    - cron: "*/15 7-12 * * 1-5"    # materias primas: manana europea, mas espaciado
+  workflow_dispatch:
+
+permissions:
+  contents: write             # para guardar el estado en el repo
+
+concurrency:
+  group: acciones
+  cancel-in-progress: false
+
+jobs:
+  acciones:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 1) Procesar comandos de Telegram (/saldo, /activar, /sesion...)
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python tools/control.py
+
+      - name: 2) Seguimiento (TP/SL/break-even/cierre de sesion)
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python tools/seguimiento.py --telegram
+
+      - name: 3) Escaneo de entradas nuevas (se autodescarta si el mercado esta cerrado)
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python tools/acciones.py --telegram --registrar
+
+      - name: 4) Guardar estado (posiciones + ajustes)
+        run: |
+          git config user.name "acciones-bot"
+          git config user.email "acciones-bot@users.noreply.github.com"
+          git add datos/posiciones.json datos/ajustes.json 2>/dev/null || true
+          git commit -m "estado acciones [skip ci]" || echo "sin cambios que guardar"
+          git push || echo "nada que empujar"

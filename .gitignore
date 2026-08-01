@@ -1,0 +1,9 @@
+# credenciales (NUNCA subir)
+datos/telegram.txt
+
+# cache de Python
+__pycache__/
+*.pyc
+
+# NO ignoramos datos/estado.json ni datos/posiciones.json:
+# el workflow los guarda en el repo para persistir cooldown y seguimiento.
