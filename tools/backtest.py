@@ -27,7 +27,7 @@ USO:
   python tools/backtest.py --dias 21 --paso 5
   python tools/backtest.py NVDAUSDT TSLAUSDT --detalle
 """
-import sys, os, argparse, datetime as dt, statistics as st
+import sys, os, argparse, bisect, datetime as dt, statistics as st
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -155,9 +155,20 @@ def recoger(sym, dias, paso, verbose=True):
         if verbose: print(f"  {sym}: historial insuficiente ({len(k5)} velas)")
         return []
 
-    k5r = sesion.filtrar_rth(k5, cal)
+    # Se indexa por timestamp para recortar el futuro con bisect. Antes cada
+    # paso hacia [v for v in k5 if int(v[0]) <= lim], o sea recorrer las ~26.000
+    # velas de 90 dias unas 79.000 veces: 2.000 millones de operaciones.
+    #
+    # La VENTANA es exactamente la de produccion: acciones.analizar() pide
+    # C.KLINES_LIMIT velas CRUDAS y deja que el filtro RTH las reduzca. Hay que
+    # darle lo mismo, porque el tamaño de la ventana cambia los indicadores (la
+    # EMA200 calienta distinto, los pivotes salen de otra serie) y calibrar con
+    # 3.300 velas para luego operar con 234 seria calibrar otro sistema.
+    ts5 = [int(v[0]) for v in k5]          # crudas, como en produccion
+    tsh = [int(v[0]) for v in kh]
+    k5r = sesion.filtrar_rth(k5, cal)      # solo para simular el resultado
+    ts5r = [int(v[0]) for v in k5r]
     grupos = sesion.agrupar_por_sesion(k5, cal)
-    idx5 = {int(v[0]): i for i, v in enumerate(k5)}
 
     # umbrales al minimo durante la recogida
     guardado = (C.MIN_SCORE, C.MIN_PROB, C.EXIGIR_CONFLUENCIA, C.THRESHOLD_MODE)
@@ -176,8 +187,10 @@ def recoger(sym, dias, paso, verbose=True):
             while t < fin:
                 utc = sesion.et_a_utc(t)
                 lim = int(utc.replace(tzinfo=dt.timezone.utc).timestamp() * 1000)
-                v5 = [v for v in k5 if int(v[0]) <= lim]
-                vh = [v for v in kh if int(v[0]) <= lim]
+                i5 = bisect.bisect_right(ts5, lim)
+                ih = bisect.bisect_right(tsh, lim)
+                v5 = k5[max(0, i5 - C.KLINES_LIMIT):i5]
+                vh = kh[max(0, ih - C.KLINES_LIMIT_HTF):ih]
                 r = acciones.analizar_con_velas(sym, C.CAPITAL_TOTAL, v5, vh, utc=utc)
                 if r.get("ens") and r.get("plan") and r["plan"].get("viable"):
                     ens, plan = r["ens"], r["plan"]
@@ -187,7 +200,8 @@ def recoger(sym, dias, paso, verbose=True):
                     # de semanas despues -> perdidas fantasma de -44R.
                     cierre_ms = int(sesion.et_a_utc(cierra)
                                     .replace(tzinfo=dt.timezone.utc).timestamp() * 1000)
-                    futuras = [v for v in k5r if lim < int(v[0]) < cierre_ms]
+                    i5r = bisect.bisect_right(ts5r, lim)
+                    futuras = k5r[i5r:bisect.bisect_left(ts5r, cierre_ms)]
                     if futuras:
                         res = simular(futuras, ens["side"], r["m5"]["price"],
                                       plan["dist"], cierra, cal)
