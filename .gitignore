@@ -5,5 +5,8 @@ datos/telegram.txt
 __pycache__/
 *.pyc
 
+# historial descargado para el backtest (se regenera solo, pesa mucho)
+datos/cache/
+
 # NO ignoramos datos/estado.json ni datos/posiciones.json:
 # el workflow los guarda en el repo para persistir cooldown y seguimiento.
