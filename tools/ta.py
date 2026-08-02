@@ -137,11 +137,25 @@ def compute(symbol, tf, candles):
     trend, tags = classify_structure(sh, sl)
     divs = detect_divergence(c, rsis, sh, sl)
     fvgs = detect_fvg(h,l,c,40)
-    bias = "neutral"
+    bias, bias_fuente = "neutral", "-"
     if e50[-1] and e200[-1]:
+        bias_fuente = "ema50/200"
         if price > e50[-1] > e200[-1]: bias = "alcista"
         elif price < e50[-1] < e200[-1]: bias = "bajista"
         elif min(e50[-1],e200[-1]) < price < max(e50[-1],e200[-1]): bias = "entre-EMAs(no-operar)"
+    elif e50[-1]:
+        # RESPALDO PARA SERIES CORTAS. En acciones el 1h filtrado a sesion solo
+        # deja 6 velas utiles por dia: con 500 descargadas quedan ~90, y la
+        # EMA200 no existe NUNCA. Sin este respaldo el sesgo del TF superior se
+        # quedaba en "neutral" para siempre, aligned() era siempre False y el
+        # bot no podia emitir ni una sola señal VERDE.
+        # Con la serie corta se usa la EMA50 y su PENDIENTE (ultimas 6 velas =
+        # una sesion entera en 1h) como sesgo de respaldo.
+        bias_fuente = "ema50+pendiente"
+        prev = e50[-7] if len(e50) > 7 and e50[-7] is not None else None
+        pendiente = (e50[-1] - prev) if prev else 0.0
+        if price > e50[-1] and pendiente > 0: bias = "alcista"
+        elif price < e50[-1] and pendiente < 0: bias = "bajista"
     res = sorted([p for (_,p) in sh if p > price])[:3]
     sop = sorted([p for (_,p) in sl if p < price], reverse=True)[:3]
     vol_avg = sum(v[-20:]) / min(20, len(v)) if v else 0
@@ -150,7 +164,7 @@ def compute(symbol, tf, candles):
         "ema13": e13[-1], "ema50": e50[-1], "ema200": e200[-1],
         "rsi": rsis[-1], "atr": a, "atr_pct": (a/price*100) if a else None,
         "macd_hist": h_last, "macd_hist_prev": h_prev, "macd_flip": macd_flip,
-        "trend": trend, "tags": tags, "bias": bias,
+        "trend": trend, "tags": tags, "bias": bias, "bias_fuente": bias_fuente,
         "divergences": divs, "fvgs": fvgs,
         "resistances": res, "supports": sop,
         "vol_last": v[-1] if v else 0, "vol_avg20": vol_avg,

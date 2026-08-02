@@ -64,6 +64,7 @@ def simular(futuras, side, entrada, dist, cierre_sesion_et, cal):
     mfe = 0.0               # maxima excursion a favor, en R
     mae = 0.0               # maxima excursion en contra, en R
     salida_r = None         # R al que se cerro el resto (None = sigue vivo)
+    ts_salida = int(futuras[-1][0]) if futuras else 0
 
     for v in futuras:
         et = sesion.ts_a_et(v[0])
@@ -87,6 +88,7 @@ def simular(futuras, side, entrada, dist, cierre_sesion_et, cal):
         if golpe_sl:
             sl_tocado = True
             salida_r = 0.0 if be else -1.0
+            ts_salida = int(v[0])
             break
         if golpe_tp:
             alcanzados += 1
@@ -95,9 +97,8 @@ def simular(futuras, side, entrada, dist, cierre_sesion_et, cal):
                 sl = entrada
             if alcanzados == len(niveles):
                 salida_r = tp_r[-1]
+                ts_salida = int(v[0])
                 break
-    else:
-        v = None
 
     # si no cerro por SL ni por TP3, se cierra al final de la sesion
     if salida_r is None:
@@ -131,7 +132,7 @@ def simular(futuras, side, entrada, dist, cierre_sesion_et, cal):
     r_roja = total + restante * salida_r
 
     return {"r_verde": r_verde, "r_roja": r_roja, "evento": evento,
-            "tps": alcanzados, "mfe": mfe, "mae": mae}
+            "tps": alcanzados, "mfe": mfe, "mae": mae, "ts_salida": ts_salida}
 
 
 # ------------------------------------------------------------------
@@ -144,7 +145,9 @@ def recoger(sym, dias, paso, verbose=True):
     cal = C.calendario_de(sym)
     try:
         k5 = bitget.historia(sym, C.TF_SCAN, dias, CACHE)
-        kh = bitget.historia(sym, C.TF_HTF, dias, CACHE)
+        # el 1h necesita mucho mas calendario: filtrado a sesion solo deja 6
+        # velas por dia, y la EMA50 del sesgo necesita al menos 50
+        kh = bitget.historia(sym, C.TF_HTF, max(dias * 4, 60), CACHE)
     except Exception as e:
         if verbose: print(f"  {sym}: error bajando historial ({e})")
         return []
@@ -178,7 +181,13 @@ def recoger(sym, dias, paso, verbose=True):
                 r = acciones.analizar_con_velas(sym, C.CAPITAL_TOTAL, v5, vh, utc=utc)
                 if r.get("ens") and r.get("plan") and r["plan"].get("viable"):
                     ens, plan = r["ens"], r["plan"]
-                    futuras = [v for v in k5r if int(v[0]) > lim]
+                    # SOLO las velas que quedan de HOY. Si se cogen todas las
+                    # futuras, una entrada pegada al cierre se queda sin velas
+                    # antes de la campana y el precio de salida acaba siendo el
+                    # de semanas despues -> perdidas fantasma de -44R.
+                    cierre_ms = int(sesion.et_a_utc(cierra)
+                                    .replace(tzinfo=dt.timezone.utc).timestamp() * 1000)
+                    futuras = [v for v in k5r if lim < int(v[0]) < cierre_ms]
                     if futuras:
                         res = simular(futuras, ens["side"], r["m5"]["price"],
                                       plan["dist"], cierra, cal)
@@ -218,20 +227,30 @@ def aplicar(candidatas, min_score, min_prob, exigir_conf, single_strong,
         pasan.append({**c, "verde": verde,
                       "r": c["r_verde"] if verde else c["r_roja"],
                       "peso": 1.0 if verde else C.RIESGO_ROJA})
-    # deduplicar: una por activo cada COOLDOWN_H
-    pasan.sort(key=lambda c: (c["sym"], c["ts"]))
-    final, ultimo = [], {}
-    por_dia = {}
+    # --- resolver solapes como lo haria el bot en vivo ---
+    # Se recorre en orden CRONOLOGICO global (no por activo) porque el limite de
+    # MAX_TRADES_SIMULTANEOS es de cartera, no de activo. Sin esto salian 59
+    # operaciones por sesion cuando en vivo caben 2 a la vez: el agregado no
+    # tenia nada que ver con lo que se podria operar de verdad.
+    pasan.sort(key=lambda c: c["ts"])
+    final, ultimo, por_dia = [], {}, {}
+    abiertas = []          # [(ts_cierre_estimado, sym)]
     for c in pasan:
-        k = c["sym"]
-        if k in ultimo and c["ts"] - ultimo[k] < C.COOLDOWN_H * 3600_000:
+        t = c["ts"]
+        abiertas = [(fin, s) for fin, s in abiertas if fin > t]
+        if len(abiertas) >= C.MAX_TRADES_SIMULTANEOS:
+            continue
+        if any(s == c["sym"] for _, s in abiertas):
+            continue
+        if c["sym"] in ultimo and t - ultimo[c["sym"]] < C.COOLDOWN_H * 3600_000:
             continue
         dk = (c["sym"], c["fecha"])
         if por_dia.get(dk, 0) >= max_por_activo_dia:
             continue
-        ultimo[k] = c["ts"]
+        ultimo[c["sym"]] = t
         por_dia[dk] = por_dia.get(dk, 0) + 1
         final.append(c)
+        abiertas.append((c.get("ts_salida") or t, c["sym"]))
     return final
 
 

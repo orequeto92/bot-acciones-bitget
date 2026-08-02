@@ -31,7 +31,9 @@ TF_HTF    = "1h"                      # timeframe superior para el sesgo
 # 1000 velas de 5m -> ~234 en sesion -> ~3 dias de mercado. Es el minimo para que
 # la EMA200 y la estructura tengan sentido.
 KLINES_LIMIT     = 1000
-KLINES_LIMIT_HTF = 500
+# El 1h sufre el filtro aun mas: solo deja 6 velas por sesion (las de 10:00 a
+# 15:00), asi que 500 velas se quedaban en 90 utiles. Se pide el maximo.
+KLINES_LIMIT_HTF = 1000
 
 # ------------------------- UNIVERSO -------------------------
 # Solo activos que cotizan en la sesion de EE.UU. Nada de acciones asiaticas
@@ -50,11 +52,18 @@ ACCIONES_US = [
 ]
 
 MATERIAS_PRIMAS = [
-    "XAUUSDT",      # oro
     "XAGUSDT",      # plata
     "CLUSDT",       # petroleo WTI
     "NATGASUSDT",   # gas natural
+    "COPPERUSDT",   # cobre
 ]
+# ORO (XAUUSDT) FUERA: no es operable con esta cuenta. La cantidad minima que
+# acepta Bitget es 0.01 onzas y el oro cotiza a ~4.070$, o sea 40.74$ por orden:
+# el 81% de una cuenta de 50$ en una sola posicion. El motor ya lo descartaba
+# solo por el control de minimos, pero dejarlo en el universo era gastar dos
+# llamadas a la API cada 5 minutos para nada. Vuelve a meterlo si la cuenta
+# pasa de ~400$. Mismo problema parcial con ASML (1.653$): sus señales ROJA
+# (margen 1.50$) no llegan al minimo de 16.53$, solo operara las VERDE.
 
 ACTIVOS = ACCIONES_US + MATERIAS_PRIMAS
 
@@ -65,7 +74,7 @@ GRUPOS = {
                    "WDCUSDT","MRVLUSDT","QCOMUSDT","ARMUSDT","SMCIUSDT"},
     "software_ia":{"PLTRUSDT","ORCLUSDT","NFLXUSDT","CRWVUSDT","NBISUSDT","IRENUSDT"},
     "cripto_prox":{"MSTRUSDT","COINUSDT","HOODUSDT","CRCLUSDT","BMNRUSDT"},
-    "materias":   set(MATERIAS_PRIMAS),
+    "materias":   set(MATERIAS_PRIMAS) | {"XAUUSDT"},   # XAU sigue siendo materia prima aunque este fuera
 }
 
 def grupo_de(sym):
