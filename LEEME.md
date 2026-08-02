@@ -134,6 +134,56 @@ que una sola sea muy fuerte **y** alineada con el 1h.
 
 ---
 
+## Calibración (62 sesiones reales, may–jul 2026)
+
+`tools/backtest.py` recorrió 62 sesiones sobre 34 activos cortando el futuro en
+cada paso. Resultados **netos de comisiones**, que es lo único que importa:
+
+| Ejecución | Coste por operación | R neto | En 3 meses |
+|---|---|---|---|
+| A mercado (taker 0,06%) | 0,174R = **17% de tu riesgo** | +1,31 | +0,66 $ |
+| Mixta (entra límite) | 0,087R = 9% | +36,12 | +18,06 $ |
+| A límite (maker 0,02%) | 0,058R = 6% | +47,71 | +23,86 $ |
+
+**Entra siempre con orden límite.** El SL medio de este sistema es 0,69%; a
+mercado, la comisión se lleva el 17% de cada R y anula toda la ventaja.
+
+### Por qué no se operan las ROJAS
+
+| | ops | aciertos | R total |
+|---|---|---|---|
+| 🟢 VERDE | 233 | 58,4% | **+45,77R** |
+| 🔴 ROJA | 388 | 45,4% | **−11,29R** |
+
+Pierden incluso a un tercio de riesgo, y ocupan huecos de cartera que le quitan
+el sitio a las verdes: al dejarlas fuera, las verdes ejecutadas pasan de 233 a
+401 y el bruto sube de +34,49R a +70,92R. Lo controla `OPERAR_ROJAS`.
+
+Con `OPERAR_ROJAS = False`, **`MIN_SCORE` deja de tener efecto**: el filtro VERDE
+(score ≥72 + prob ≥0,50 + alineada con el 1h) ya es más estricto. Da igual 60
+que 70: las mismas 401 operaciones.
+
+### Cuidado con las muestras pequeñas
+
+Una corrida previa de sólo 10 sesiones decía lo contrario en casi todo:
+
+| | 10 sesiones | 62 sesiones |
+|---|---|---|
+| SMC_REVERSAL | −3,78R (el peor) | **+27,84R (el mejor)** |
+| Apertura | −5,35R | +11,75R |
+| Confluencia | mejor `False` | mejor `True` |
+
+Si se hubiese "optimizado" con aquello, se habría eliminado la mejor estrategia
+del sistema. **No toques umbrales con menos de ~50 sesiones.**
+
+### Lo que el backtest NO sabe
+
+- **Supone que la orden límite siempre se llena.** No es cierto, y las que no se
+  llenan suelen ser las que se van sin ti, o sea las ganadoras. El +47,7% real
+  será menor.
+- Un solo régimen de mercado (3 meses).
+- Sin slippage ni spread real: usa el precio de las velas.
+
 ## Ajustes de selectividad
 
 Todo en `config.py`:
