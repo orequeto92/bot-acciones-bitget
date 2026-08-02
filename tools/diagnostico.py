@@ -56,6 +56,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--local", action="store_true",
                     help="muestra los chat_id (SOLO en tu maquina, nunca en Actions)")
+    ap.add_argument("--enviar", action="store_true",
+                    help="manda un mensaje de prueba de verdad (por defecto solo comprueba)")
     a = ap.parse_args()
 
     print("=" * 62)
@@ -75,15 +77,23 @@ def main():
         print(f"  {nombre:<20} presente ({len(valor)} caracteres)")
         return True
 
-    print("\n1) VARIABLES DE ENTORNO")
+    print("\n1) DE DONDE SALEN LAS CREDENCIALES")
     ok_tok = estado("TELEGRAM_TOKEN", tok_env)
     ok_chat = estado("TELEGRAM_CHAT_ID", chat_env)
-    if not ok_tok or not ok_chat:
-        print("\n  -> Las variables no llegan al proceso. En GitHub revisa que los")
-        print("     secrets se llamen EXACTAMENTE TELEGRAM_TOKEN y TELEGRAM_CHAT_ID")
-        print("     (Settings > Secrets and variables > Actions > pestaña Secrets,")
-        print("     NO 'Variables'), y que el valor no este vacio.")
-        fallos.append("credenciales ausentes")
+    if ok_tok and ok_chat:
+        print("  fuente -> variables de entorno (asi funciona en GitHub Actions)")
+    elif tok and chat:
+        # En local es lo normal: las credenciales viven en datos/telegram.txt,
+        # que esta en .gitignore. No es un fallo.
+        print("  fuente -> datos/telegram.txt (normal en local; en Actions se")
+        print("            usan los secrets, que aqui no existen)")
+    else:
+        print("\n  -> No hay credenciales por ningun lado.")
+        print("     En GitHub: los secrets deben llamarse EXACTAMENTE")
+        print("     TELEGRAM_TOKEN y TELEGRAM_CHAT_ID (Settings > Secrets and")
+        print("     variables > Actions > pestaña Secrets, NO 'Variables').")
+        print("     En local: crea datos/telegram.txt con TOKEN= y CHAT_ID=")
+        fallos.append("sin credenciales")
 
     if not tok:
         print("\nSin token no se puede comprobar nada mas.")
@@ -126,16 +136,26 @@ def main():
         elif chats:
             print("  (los chat_id no se imprimen: este log es publico. Usa --local)")
 
-    # --- 4) ¿se puede ENVIAR? ---
-    print("\n4) ENVIO DE PRUEBA (sendMessage)")
+    # --- 4) ¿se puede escribir en el chat? ---
+    # Por defecto se comprueba con getChat, que NO envia nada: este diagnostico
+    # corre en cada ejecucion del workflow (cada 5 min en sesion) y mandar un
+    # mensaje de prueba cada vez seria llenar el Telegram de ruido. Con
+    # --enviar se manda de verdad, para la comprobacion manual.
+    metodo = "sendMessage" if a.enviar else "getChat"
+    print(f"\n4) ACCESO AL CHAT ({metodo})")
     if not chat:
         print("  sin CHAT_ID, no se intenta")
         fallos.append("sin chat_id")
     else:
-        ok, res = _api(tok, "sendMessage",
-                       {"chat_id": chat, "text": "✅ Diagnostico: el canal funciona."})
-        if ok:
+        params = ({"chat_id": chat, "text": "✅ Diagnostico: el canal funciona."}
+                  if a.enviar else {"chat_id": chat})
+        ok, res = _api(tok, metodo, params)
+        if ok and a.enviar:
             print("  ENVIADO. Mira tu Telegram: deberias tener el mensaje.")
+        elif ok:
+            tipo = res.get("type", "?") if isinstance(res, dict) else "?"
+            print(f"  chat ACCESIBLE (tipo: {tipo}). No se ha enviado nada;")
+            print("  usa --enviar si quieres una prueba real.")
         else:
             print(f"  FALLO -> {res}")
             if "chat not found" in str(res).lower():
