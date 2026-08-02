@@ -196,7 +196,17 @@ def margen_por_op(capital_total=None):
 SL_LOOKBACK   = 20        # velas de sesion hacia atras (~1h 40m) para el swing
 SL_BUFFER_ATR = 0.7       # colchon sobre el swing, en ATR
 SL_MIN_ATR    = 2.0       # distancia minima en ATR
-SL_MIN_PCT    = 0.40      # suelo absoluto de distancia (%)
+# SUELO SUBIDO DE 0.40 A 0.80. El coste de transaccion en R es 2*comision/SL,
+# asi que un stop ceñido se come la ventaja: con SL 0.40 el sistema daba -1.41R
+# netos y con 0.80 da +8.28R. Barrido sobre 62 sesiones (entrada a mercado,
+# taker 0.06%):
+#     SL 0.40%  398 ops  52.3%  -1.41R
+#     SL 0.80%  340 ops  53.2%  +8.28R   <- optimo, y es un punto INTERIOR
+#     SL 1.20%  246 ops  51.2%  +5.30R
+#     SL 1.60%  206 ops  49.0%  -1.91R
+# Que el optimo caiga dentro del rango y no en un extremo es buena señal, pero
+# OJO: sigue estando ajustado sobre los mismos datos con los que se midio.
+SL_MIN_PCT    = 0.80      # suelo absoluto de distancia (%)
 # TECHO: si el SL estructural se pasa de aqui, la señal se DESCARTA (no se
 # recorta). Recortarlo dejaria el stop por delante del swing, o sea dentro del
 # ruido: te barren y encima el swing seguia intacto. Mejor no operar.

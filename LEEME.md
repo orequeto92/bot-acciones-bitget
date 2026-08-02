@@ -169,36 +169,60 @@ La comisión pesa `2 × comisión / SL`, así que un stop más ancho la diluye:
 | 1,20% | 246 | 51,2% | +28,67 | −23,37 | +5,30 | — |
 | 1,60% | 206 | 49,0% | +13,23 | −15,14 | −1,91 | — |
 
-## ⚠️ VEREDICTO: no hay ventaja demostrable
+### La ejecución decide, y hay una vía alcanzable
 
-**Ninguna configuración probada es estadísticamente distinguible de cero.** Las
-ocho variantes del barrido caen entre −9,41R y +9,18R, todas con `|t| < 0,8`
-(hace falta `|t| ≥ 2`). Ese abanico es justo lo que produce un sistema sin
-ventaja cuando lo cortas de ocho formas: el que sale arriba, sale arriba por
-azar.
+| Ejecución | R neto | % cuenta / trimestre | t | ¿Viable? |
+|---|---|---|---|---|
+| A mercado + taker 0,06% | +8,28 | +8,3% | +0,46 | ya lo tienes |
+| **Límite 1 bps + maker 0,02%** | **+25,91** | **+25,9%** | **+1,47** | **alcanzable** ✅ |
+| A mercado + taker 0,02% | +36,73 | +36,7% | +2,03 | exige ~$30.000 (VIP) |
 
-Para **demostrar** una ventaja de este tamaño harían falta **6.745 operaciones
-≈ 4,9 años** de mercado. Con 3 meses de datos, no se puede saber.
+**Entra con límite pegada al precio** (en el bid si es LONG), a 1–2 bps. No
+esperes retroceso: a 10 bps sólo entra el 75% y lo que se escapa vale +0,655R.
+A 1 bps entra el **90,7%** y cobras maker.
 
-### Por qué
+La selección adversa **no desaparece** ni a 1 bps (el 9,3% que se escapa vale
++0,589R), pero el ahorro de comisión ya la compensa.
 
-El coste de transacción es demasiado grande para el tamaño de los movimientos
-que capturan estas estrategias. Con un SL del 0,69%, ida y vuelta a taker se
-lleva el **17% de cada R** — hay que acertar mucho sólo para empatar. Y la vía
-de escape obvia (entrar a límite para pagar maker) no funciona por la selección
-adversa descrita arriba.
+### Marco temporal: subirlo NO ayuda
 
-### Qué haría falta para que funcionase
+| TF | R bruto | Comisiones | R neto | t |
+|---|---|---|---|---|
+| **5m** | +50,96 | −42,68 | **+8,28** | +0,46 |
+| 15m | +6,33 | −24,31 | −17,99 | −1,43 |
+| 30m | +4,06 | −11,02 | −6,96 | −0,79 |
 
-- **Movimientos más grandes**: marco temporal mayor (swing en vez de intradía),
-  donde el coste fijo pesa mucho menos sobre cada operación.
-- **Comisiones más bajas**: nivel VIP en Bitget, o un instrumento más barato.
-- **Más datos**: estos contratos son de 2026; en 2 o 3 años habrá muestra para
-  responder de verdad.
+Las comisiones bajan un 43% como cabía esperar, pero la ventaja bruta se
+desploma un 88%. **La ventaja de estas estrategias vive en el 5m.**
 
-**Recomendación: no operar esto con dinero real tal como está.** El motor, el
-reloj de sesión y el backtest son sólidos y reutilizables; lo que no está
-demostrado es que las estrategias tengan ventaja en este instrumento.
+## ⚠️ VEREDICTO: prometedor pero aún no demostrado
+
+La mejor configuración **alcanzable** (sólo VERDES, SL mínimo 0,80%, entrada
+límite a 1 bps con comisión maker) da **+25,9% de la cuenta por trimestre**,
+pero con `t = 1,47`. Hace falta `|t| ≥ 2`. **Todavía no está demostrada.**
+
+Lo que sí ha cambiado es cuánto falta para saberlo:
+
+| | sesiones necesarias | tiempo |
+|---|---|---|
+| Config a taker | 1.226 | **4,9 años** |
+| **Config alcanzable** | **115** (te faltan 53) | **2,5 meses** |
+
+### El plan sensato
+
+1. **Déjalo correr y registra las señales.** Cada sesión que pasa suma muestra.
+2. **Verifica lo que el backtest no puede**: pon una orden límite real y mira si
+   Bitget te la cobra como *maker* o como *taker*. Con velas de 5m es imposible
+   saberlo, y de eso depende todo el cálculo.
+3. **Reevalúa a las 115 sesiones** (~2,5 meses). Ahí `t` será concluyente en un
+   sentido o en otro.
+
+### Riesgos que siguen abiertos
+
+- Los parámetros (sólo VERDES, SL 0,80%) están **ajustados sobre estos mismos
+  datos**. Las 53 sesiones nuevas son la prueba fuera de muestra.
+- Un solo régimen de mercado (mayo–julio 2026).
+- Sin spread real ni slippage: el backtest usa el precio de las velas.
 
 ### Por qué no se operan las ROJAS
 

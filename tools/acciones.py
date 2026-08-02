@@ -333,10 +333,10 @@ def formatear(r):
         L.append(f"Gap de hoy: {g['pct']:+.2f}% ({g['direccion']}) | cierre previo "
                  f"{g['cierre_previo']:.{dec}f}" + (" | ya rellenado" if g["cerrado"] else ""))
     L.append("")
-    L.append("📌 ENTRA A MERCADO, no esperes un retroceso. Medido sobre 4.015 "
-             "señales: poner el limite 10 bps mejor solo se llena el 75% de las "
-             "veces, y las que se escapan valian +0.655R frente a +0.026R de las "
-             "que entran. Lo que ahorras en comision lo pierdes en operaciones.")
+    L.append("📌 ENTRA CON LIMITE PEGADA AL PRECIO (en el bid si es LONG, en el "
+             "ask si es SHORT), a 1-2 bps como mucho. NO esperes un retroceso: a "
+             "10 bps solo entra el 75% y lo que se escapa vale +0.655R frente a "
+             "+0.026R de lo que entra. A 1 bps entra el 91% y cobras maker.")
     L.append("")
     partes = " | ".join(f"{d['name']}:{d['prob']:.2f}/{d['score']}" for d in ens["confirmantes"])
     aligned_txt = f" HTF aligned +{C.HTF_BONUS}" if r["aligned"] else ""
