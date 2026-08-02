@@ -158,10 +158,47 @@ las que arrancan de inmediato. Esperar un retroceso de 10 bps selecciona justo
 las que se quedan paradas. Entrar a límite ahorra 52R de comisión y destruye
 53R de beneficio: se cancelan.
 
-⚠️ **Conclusión honesta: con estos parámetros el sistema no tiene ventaja
-explotable después de costes.** Ambas cifras son cero a efectos prácticos. El
-problema de fondo es que el SL medio (0,69%) es demasiado ceñido para el coste
-de transacción: la comisión pesa `2 × comisión / SL`.
+### Ensanchar el stop ayuda, pero no salva el sistema
+
+La comisión pesa `2 × comisión / SL`, así que un stop más ancho la diluye:
+
+| SL mínimo | ops | aciertos | R bruto | Comisiones | R neto | t |
+|---|---|---|---|---|---|---|
+| 0,40% | 398 | 52,3% | +67,50 | −68,91 | −1,41 | −0,10 |
+| **0,80%** | 340 | 53,2% | +50,96 | −42,68 | **+8,28** | +0,46 |
+| 1,20% | 246 | 51,2% | +28,67 | −23,37 | +5,30 | — |
+| 1,60% | 206 | 49,0% | +13,23 | −15,14 | −1,91 | — |
+
+## ⚠️ VEREDICTO: no hay ventaja demostrable
+
+**Ninguna configuración probada es estadísticamente distinguible de cero.** Las
+ocho variantes del barrido caen entre −9,41R y +9,18R, todas con `|t| < 0,8`
+(hace falta `|t| ≥ 2`). Ese abanico es justo lo que produce un sistema sin
+ventaja cuando lo cortas de ocho formas: el que sale arriba, sale arriba por
+azar.
+
+Para **demostrar** una ventaja de este tamaño harían falta **6.745 operaciones
+≈ 4,9 años** de mercado. Con 3 meses de datos, no se puede saber.
+
+### Por qué
+
+El coste de transacción es demasiado grande para el tamaño de los movimientos
+que capturan estas estrategias. Con un SL del 0,69%, ida y vuelta a taker se
+lleva el **17% de cada R** — hay que acertar mucho sólo para empatar. Y la vía
+de escape obvia (entrar a límite para pagar maker) no funciona por la selección
+adversa descrita arriba.
+
+### Qué haría falta para que funcionase
+
+- **Movimientos más grandes**: marco temporal mayor (swing en vez de intradía),
+  donde el coste fijo pesa mucho menos sobre cada operación.
+- **Comisiones más bajas**: nivel VIP en Bitget, o un instrumento más barato.
+- **Más datos**: estos contratos son de 2026; en 2 o 3 años habrá muestra para
+  responder de verdad.
+
+**Recomendación: no operar esto con dinero real tal como está.** El motor, el
+reloj de sesión y el backtest son sólidos y reutilizables; lo que no está
+demostrado es que las estrategias tengan ventaja en este instrumento.
 
 ### Por qué no se operan las ROJAS
 

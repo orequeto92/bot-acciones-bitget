@@ -499,7 +499,8 @@ def main():
     # pueden responder "¿y si ademas descarto las ROJAS?". Aqui se cruzan las dos
     # decisiones y se restan las comisiones, que es lo unico que importa.
     print(f"\n### COMBINADO, NETO DE COMISIONES ({a.comision}% por lado, taker de Bitget)")
-    print(f"  {'config':<34} {'ops':>5} {'aciertos':>9} {'R bruto':>9} {'comis':>8} {'R NETO':>9} {'$':>8}")
+    print(f"  {'config':<34} {'ops':>5} {'aciertos':>9} {'R bruto':>9} {'comis':>8} "
+          f"{'R NETO':>9} {'$':>8} {'t':>6} {'signif':>7}")
     riesgo_op = a.capital * C.MARGEN_OP_PCT / 100 * C.SL_PCT_MARGEN / 100
     mejor = None
     for solo_v in (False, True):
@@ -513,9 +514,19 @@ def main():
             comis = sum(o["coste"] * o["peso"] for o in ops)
             neto = bruto - comis
             acier = sum(1 for o in ops if o["r"] > 0.01) / len(ops) * 100
+            # ¿ES DISTINGUIBLE DE CERO? Sin esto es facil leer "+8.28R" como una
+            # ventaja cuando puede ser ruido. t = media / error estandar; con
+            # |t| < 2 el resultado NO se distingue de cero por mucho que el
+            # total parezca bonito.
+            netos = [(o["r_bruto"] - o["coste"]) * o["peso"] for o in ops]
+            media = st.mean(netos)
+            desv = st.stdev(netos) if len(netos) > 1 else 0.0
+            t = media / (desv / (len(netos) ** 0.5)) if desv else 0.0
+            signif = "SI" if abs(t) >= 2 else "no"
             etiq = f"{'solo VERDE' if solo_v else 'VERDE+ROJA'}, MIN_SCORE {ms}"
             print(f"  {etiq:<34} {len(ops):>5} {acier:>8.1f}% {bruto:>+9.2f} "
-                  f"{-comis:>8.2f} {neto:>+9.2f} {neto*riesgo_op:>+8.2f}")
+                  f"{-comis:>8.2f} {neto:>+9.2f} {neto*riesgo_op:>+8.2f} "
+                  f"{t:>+6.2f} {signif:>7}")
             if mejor is None or neto > mejor[0]:
                 mejor = (neto, etiq, len(ops))
     if mejor:
