@@ -398,6 +398,9 @@ def main():
                     help="cuanto mejor que el precio de señal se pone el limite, en bps")
     ap.add_argument("--espera", type=int, default=6,
                     help="velas de 5m que se espera a que la limite se llene (6 = 30 min)")
+    ap.add_argument("--tf", default=None,
+                    help="marco temporal de escaneo (5m, 15m, 30m, 1h). Subirlo hace "
+                         "los movimientos mas grandes y diluye la comision")
     ap.add_argument("--sl-min", type=float, default=None, dest="sl_min",
                     help="sobreescribe C.SL_MIN_PCT: el coste en R es 2*comision/SL, "
                          "asi que ensanchar el stop diluye la comision")
@@ -406,6 +409,12 @@ def main():
     if a.sl_min is not None:
         C.SL_MIN_PCT = a.sl_min
         print(f"[config] SL_MIN_PCT sobreescrito a {a.sl_min}%")
+    if a.tf:
+        # Subir el marco temporal es la via que ataca la raiz del problema: el
+        # coste es 2*comision/SL, y en 15m o 30m los movimientos (y por tanto
+        # los stops estructurales) son mayores, asi que la comision pesa menos.
+        C.TF_SCAN = a.tf
+        print(f"[config] TF_SCAN sobreescrito a {a.tf}")
 
     symbols = [s.upper() for s in a.symbols] or C.ACTIVOS
     modo = ("orden LIMITE" if not a.mercado else "orden a MERCADO")
