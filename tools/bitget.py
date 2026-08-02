@@ -20,7 +20,7 @@ FORMATO DE VELA: index 0=ts(ms) 2=high 3=low 4=close 5=volumen base.
 Coincide con lo que espera ta.compute(), asi que es intercambiable con el
 binance.py del motor original sin tocar el analisis tecnico.
 """
-import json, time, urllib.request, urllib.error
+import json, os, time, urllib.request, urllib.error
 
 BASE = "https://api.bitget.com"
 PRODUCT = "usdt-futures"             # productType de la API v2 (USDT-M)
@@ -69,6 +69,55 @@ def klines(symbol, interval="5m", limit=300):
     velas = [c for c in (raw or []) if c and len(c) >= 6]
     velas.sort(key=lambda c: int(c[0]))
     return velas
+
+
+def historia(symbol, interval="5m", dias=14, cache_dir=None, verbose=False):
+    """Historial largo paginando hacia atras con /history-candles (200 por peticion).
+
+    klines() solo da 1000 velas, que en 5m son ~3 sesiones utiles: poco para
+    calibrar nada. Esto baja semanas. Se cachea en disco porque el historial
+    pasado NO cambia y una calibracion se repite muchas veces.
+    """
+    gran = _GRAN.get(interval, interval)
+    ahora_ms = int(time.time() * 1000)
+    desde_ms = ahora_ms - dias * 86400_000
+
+    cache_path = None
+    if cache_dir:
+        os.makedirs(cache_dir, exist_ok=True)
+        cache_path = os.path.join(cache_dir, f"{symbol}-{interval}-{dias}d.json")
+        if os.path.exists(cache_path) and time.time() - os.path.getmtime(cache_path) < 6 * 3600:
+            try:
+                with open(cache_path, encoding="utf-8") as f:
+                    return json.load(f)
+            except (OSError, ValueError):
+                pass
+
+    velas, end = {}, ahora_ms
+    for _ in range(200):                       # tope de seguridad
+        raw = _get("/api/v2/mix/market/history-candles",
+                   {"symbol": symbol, "productType": PRODUCT, "granularity": gran,
+                    "limit": 200, "endTime": end})
+        lote = [c for c in (raw or []) if c and len(c) >= 6]
+        if not lote:
+            break
+        for c in lote:
+            velas[int(c[0])] = c
+        mas_antigua = min(int(c[0]) for c in lote)
+        if mas_antigua <= desde_ms or len(lote) < 200:
+            break
+        end = mas_antigua
+        time.sleep(0.12)                       # cortesia con la API
+    out = [velas[t] for t in sorted(velas) if t >= desde_ms]
+    if verbose:
+        print(f"    {symbol} {interval}: {len(out)} velas ({dias}d)")
+    if cache_path:
+        try:
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(out, f)
+        except OSError:
+            pass
+    return out
 
 
 # ----------------------------- contratos -----------------------------

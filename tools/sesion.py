@@ -264,10 +264,25 @@ def estado(cal=DEFECTO, utc=None, orb_min=15, aviso_cierre_min=30):
 # ------------------------------------------------------------------
 # FILTRADO DE VELAS
 # ------------------------------------------------------------------
+_cache_rth = {}
+
 def filtrar_rth(velas, cal=DEFECTO):
     """Deja SOLO las velas que abrieron dentro de sesion. Es lo primero que se
-    hace con cualquier serie antes de calcular un indicador."""
-    return [v for v in velas if en_sesion(ts_a_et(v[0]), cal)]
+    hace con cualquier serie antes de calcular un indicador.
+
+    Memoizado por timestamp: en un backtest la misma vela se evalua miles de
+    veces (una por cada paso de la simulacion) y construir su datetime cada vez
+    dominaba el tiempo de ejecucion."""
+    out = []
+    for v in velas:
+        clave = (int(v[0]), cal)
+        dentro = _cache_rth.get(clave)
+        if dentro is None:
+            dentro = en_sesion(ts_a_et(v[0]), cal)
+            _cache_rth[clave] = dentro
+        if dentro:
+            out.append(v)
+    return out
 
 
 def agrupar_por_sesion(velas, cal=DEFECTO):
