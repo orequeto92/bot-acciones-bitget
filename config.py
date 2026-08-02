@@ -143,7 +143,22 @@ ESTRATEGIAS = [
 SEM_VERDE_SCORE = 72
 SEM_VERDE_PROB  = 0.50
 RIESGO_VERDE = 1.00
-RIESGO_ROJA  = 0.30       # las "rojas" arriesgan un tercio
+RIESGO_ROJA  = 0.30       # las "rojas" arriesgarian un tercio... si se operasen
+
+# NO SE OPERAN LAS ROJAS. Medido sobre 62 sesiones reales (mayo-julio 2026,
+# 34 activos, 621 operaciones simuladas):
+#
+#     🟢 VERDE  233 ops  58.4% aciertos   +45.77R
+#     🔴 ROJA   388 ops  45.4% aciertos   -11.29R
+#
+# Las rojas pierden dinero incluso arriesgando un tercio, y ademas ocupan
+# huecos de cartera (max 2 simultaneas) que le quitan el sitio a las verdes:
+# al dejar de operarlas, las verdes ejecutadas pasan de 233 a 401 y el
+# resultado bruto sube de +34.49R a +70.92R. El mismo patron aparecio en una
+# corrida independiente de 10 sesiones, con la misma direccion.
+#
+# Ponlo en True si quieres volver al comportamiento anterior.
+OPERAR_ROJAS = False
 
 # ------------------------- GESTION DE RIESGO / DINERO -------------------------
 # CUENTA TOTAL = 50$. Riesgo por operacion = 1% = 0.50$.

@@ -225,8 +225,23 @@ def recoger(sym, dias, paso, verbose=True):
 # ------------------------------------------------------------------
 # APLICAR UMBRALES Y CONTAR
 # ------------------------------------------------------------------
+def coste_r(sl_pct, comision_pct):
+    """Comision de ida y vuelta expresada en R.
+
+    El riesgo 1R = notional * SL%. La comision = notional * comision% * 2 (entrar
+    y salir; los cierres parciales suman el 100% de la posicion, asi que cuentan
+    como una salida). Al dividir, el notional se va:
+        coste_R = 2 * comision% / SL%
+    Con el taker de Bitget (0.06%) y un SL del 1.25% son 0.096R por operacion:
+    casi el 10% de lo que arriesgas, en cada trade. Con 600 operaciones eso
+    decide si el sistema gana o no.
+    """
+    return (2.0 * comision_pct / sl_pct) if sl_pct else 0.0
+
+
 def aplicar(candidatas, min_score, min_prob, exigir_conf, single_strong,
-            verde_score, verde_prob, max_por_activo_dia=99):
+            verde_score, verde_prob, max_por_activo_dia=99,
+            solo_verde=False, comision_pct=0.0):
     """Filtra las candidatas con un juego de umbrales y resuelve solapes:
     una sola operacion viva por activo (la siguiente no entra hasta que la
     anterior cerraria por cooldown)."""
@@ -238,8 +253,13 @@ def aplicar(candidatas, min_score, min_prob, exigir_conf, single_strong,
             if not (c["score"] >= single_strong and c["aligned"]):
                 continue
         verde = c["score"] >= verde_score and c["prob"] >= verde_prob and c["aligned"]
+        if solo_verde and not verde:
+            continue
+        bruto = c["r_verde"] if verde else c["r_roja"]
         pasan.append({**c, "verde": verde,
-                      "r": c["r_verde"] if verde else c["r_roja"],
+                      "r_bruto": bruto,
+                      "coste": coste_r(c["sl_pct"], comision_pct),
+                      "r": bruto - coste_r(c["sl_pct"], comision_pct),
                       "peso": 1.0 if verde else C.RIESGO_ROJA})
     # --- resolver solapes como lo haria el bot en vivo ---
     # Se recorre en orden CRONOLOGICO global (no por activo) porque el limite de
@@ -312,6 +332,8 @@ def main():
     ap.add_argument("--paso", type=int, default=5, help="minutos entre evaluaciones")
     ap.add_argument("--capital", type=float, default=C.CAPITAL_TOTAL)
     ap.add_argument("--detalle", action="store_true", help="lista cada operacion")
+    ap.add_argument("--comision", type=float, default=0.06,
+                    help="comision por lado en %% (0.06 = taker de Bitget; 0.02 = maker)")
     a = ap.parse_args()
 
     symbols = [s.upper() for s in a.symbols] or C.ACTIVOS
@@ -366,6 +388,36 @@ def main():
         ops = aplicar(todas, C.MIN_SCORE, C.MIN_PROB, C.EXIGIR_CONFLUENCIA,
                       C.SINGLE_STRONG_SCORE, vs, C.SEM_VERDE_PROB)
         print(_fila(f"SEM_VERDE_SCORE = {vs}", resumen(ops), a.capital))
+
+    # --- barrido combinado: lo que las tablas de una sola variable no ven ---
+    # Las tablas anteriores mueven una palanca dejando el resto fijo, asi que no
+    # pueden responder "¿y si ademas descarto las ROJAS?". Aqui se cruzan las dos
+    # decisiones y se restan las comisiones, que es lo unico que importa.
+    print(f"\n### COMBINADO, NETO DE COMISIONES ({a.comision}% por lado, taker de Bitget)")
+    print(f"  {'config':<34} {'ops':>5} {'aciertos':>9} {'R bruto':>9} {'comis':>8} {'R NETO':>9} {'$':>8}")
+    riesgo_op = a.capital * C.MARGEN_OP_PCT / 100 * C.SL_PCT_MARGEN / 100
+    mejor = None
+    for solo_v in (False, True):
+        for ms in (60, 65, 70, 75):
+            ops = aplicar(todas, ms, C.MIN_PROB, C.EXIGIR_CONFLUENCIA,
+                          C.SINGLE_STRONG_SCORE, C.SEM_VERDE_SCORE, C.SEM_VERDE_PROB,
+                          solo_verde=solo_v, comision_pct=a.comision)
+            if not ops:
+                continue
+            bruto = sum(o["r_bruto"] * o["peso"] for o in ops)
+            comis = sum(o["coste"] * o["peso"] for o in ops)
+            neto = bruto - comis
+            acier = sum(1 for o in ops if o["r"] > 0.01) / len(ops) * 100
+            etiq = f"{'solo VERDE' if solo_v else 'VERDE+ROJA'}, MIN_SCORE {ms}"
+            print(f"  {etiq:<34} {len(ops):>5} {acier:>8.1f}% {bruto:>+9.2f} "
+                  f"{-comis:>8.2f} {neto:>+9.2f} {neto*riesgo_op:>+8.2f}")
+            if mejor is None or neto > mejor[0]:
+                mejor = (neto, etiq, len(ops))
+    if mejor:
+        print(f"\n  Mejor combinacion: {mejor[1]}  ->  {mejor[0]:+.2f}R netos "
+              f"({mejor[0]*riesgo_op:+.2f}$) con {mejor[2]} operaciones")
+        print(f"  Sobre {len(fechas)} sesiones: {mejor[2]/len(fechas):.1f} ops/sesion, "
+              f"{mejor[0]*riesgo_op/a.capital*100:+.1f}% de la cuenta")
 
     # --- por estrategia ---
     print(f"\n### POR ESTRATEGIA (con la configuracion actual)")

@@ -248,6 +248,10 @@ def analizar_con_velas(sym, capital, k5, kh, utc=None, ignorar_sesion=False):
 
     verde = ens["score"] >= C.SEM_VERDE_SCORE and ens["prob"] >= C.SEM_VERDE_PROB and aligned
     roja = not verde
+    if roja and not C.OPERAR_ROJAS:
+        return {"sym": sym, "descartada": True, "ens": ens, "sesion": est,
+                "min_score": min_score, "m5": m5,
+                "motivo": "señal ROJA (no se operan: -11.29R en 62 sesiones)"}
     plan = _plan_dinero(sym, ens["side"], m5["price"], m5["atr"] or m5["price"] * 0.003,
                         capital, roja, h=ctx["h"], l=ctx["l"])
 
@@ -328,6 +332,10 @@ def formatear(r):
         g = r["gap"]
         L.append(f"Gap de hoy: {g['pct']:+.2f}% ({g['direccion']}) | cierre previo "
                  f"{g['cierre_previo']:.{dec}f}" + (" | ya rellenado" if g["cerrado"] else ""))
+    L.append("")
+    L.append("📌 ENTRA CON ORDEN LIMITE, no a mercado. Con el SL medio de este "
+             "sistema (0.69%), el taker de Bitget se lleva el 17% de tu riesgo en "
+             "cada operacion y anula toda la ventaja; a limite (maker) baja al 6%.")
     L.append("")
     partes = " | ".join(f"{d['name']}:{d['prob']:.2f}/{d['score']}" for d in ens["confirmantes"])
     aligned_txt = f" HTF aligned +{C.HTF_BONUS}" if r["aligned"] else ""
