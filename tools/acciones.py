@@ -442,12 +442,19 @@ def main():
         else:
             print("\n  Sin señales que superen el umbral ahora mismo.")
 
+    # Si se pidio Telegram y el envio falla, se sale con error. Callarse una
+    # señal y devolver "success" deja el bot mudo sin que te enteres.
+    fallo_envio = False
     if a.telegram:
         if not telegram.configurado():
-            print("\n  [telegram] sin credenciales; no se envia.")
+            print("\n  [telegram] SIN CREDENCIALES: no se envia nada.")
+            fallo_envio = True
         elif emitir:
             ok = sum(1 for r in emitir if telegram.enviar(formatear(r)))
             print(f"\n  [telegram] enviadas {ok}/{len(emitir)} señales.")
+            if ok < len(emitir):
+                print(f"  [telegram] FALLARON {len(emitir)-ok} envios.")
+                fallo_envio = True
         else:
             print("\n  [telegram] sin señales que enviar.")
 
@@ -455,6 +462,8 @@ def main():
         n = seguimiento.registrar(emitir)
         print(f"\n  [seguimiento] {n} posicion(es) registrada(s) para vigilar.")
 
+    return 1 if fallo_envio else 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

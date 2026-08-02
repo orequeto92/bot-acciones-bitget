@@ -52,6 +52,15 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Va PRIMERO y en serio: si el canal esta roto la ejecucion se pone en
+      # ROJO. Antes todos los pasos salian verdes aunque el bot estuviese mudo,
+      # que es la peor combinacion posible en un bot de señales.
+      - name: 0) Comprobar que el canal de Telegram funciona
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python tools/diagnostico.py
+
       - name: 1) Procesar comandos de Telegram (/saldo, /activar, /sesion...)
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
