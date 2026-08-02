@@ -157,6 +157,22 @@ def _plan_dinero(sym, side, price, atr, capital, roja, h=None, l=None):
     except Exception:
         min_notional, min_qty = 5.0, 0.01
     qty = notional / price if price else 0.0
+
+    # PRECIO LIMITE PARA COBRAR MAKER. Se pone a 1 bps del precio, pero nunca a
+    # menos de UN TICK: una limite al mismo precio que el mercado se cruza y
+    # paga taker, que es justo lo que queremos evitar. El tick sale de
+    # pricePlace del contrato (NVDA a 199$ con 2 decimales -> 0.01$ = 0.5 bps).
+    try:
+        dec = bitget.decimales_precio(sym)
+    except Exception:
+        dec = 2
+    tick = 10.0 ** (-dec)
+    sep = max(tick, price * 0.0001)          # 1 bps o un tick, lo que sea mayor
+    if side == "long":
+        limite = round((price - sep) / tick) * tick
+    else:
+        limite = round((price + sep) / tick) * tick
+    sep_real_bps = abs(limite - price) / price * 10000 if price else 0.0
     viable, motivo_no = True, ""
     if notional < min_notional:
         viable, motivo_no = False, f"posicion {notional:.2f}$ < minimo {min_notional:g}$"
@@ -167,6 +183,7 @@ def _plan_dinero(sym, side, price, atr, capital, roja, h=None, l=None):
     return {"sl": sl, "sl_pct": sl_pct, "lev": lev, "lev_ideal": lev_ideal,
             "lev_tope": _lev_tope(sym), "tps": tps, "margen": margen,
             "margen_base": margen_base, "notional": notional, "qty": qty,
+            "limite": limite, "tick": tick, "sep_bps": sep_real_bps,
             "riesgo_usd": riesgo_usd,
             "riesgo_pct_cuenta": (riesgo_usd / capital * 100.0) if capital else 0.0,
             "dist": dist, "viable": viable, "motivo_no": motivo_no}
@@ -300,7 +317,9 @@ def formatear(r):
     L = []
     L.append(f"{emoji} {sym} | {side} (Bitget USDT-M / Stock)")
     L.append("")
-    L.append(f"Entrada: {price:.{dec}f}")
+    L.append(f"Entrada LIMITE: {plan['limite']:.{dec}f}   "
+             f"({plan['sep_bps']:.1f} bps {'debajo' if ens['side']=='long' else 'encima'} "
+             f"de {price:.{dec}f})")
     L.append(f"SL: {plan['sl']:.{dec}f} | SL%: {plan['sl_pct']:.2f}%")
     L.append(f"Lev sugerido: {plan['lev']}x (tope del contrato {plan['lev_tope']}x)")
     L.append(f"Margen a usar: {plan['margen']:.2f}$ (de {r['capital']:.0f}$ cuenta) | "
