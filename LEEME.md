@@ -139,14 +139,29 @@ que una sola sea muy fuerte **y** alineada con el 1h.
 `tools/backtest.py` recorrió 62 sesiones sobre 34 activos cortando el futuro en
 cada paso. Resultados **netos de comisiones**, que es lo único que importa:
 
-| Ejecución | Coste por operación | R neto | En 3 meses |
-|---|---|---|---|
-| A mercado (taker 0,06%) | 0,174R = **17% de tu riesgo** | +1,31 | +0,66 $ |
-| Mixta (entra límite) | 0,087R = 9% | +36,12 | +18,06 $ |
-| A límite (maker 0,02%) | 0,058R = 6% | +47,71 | +23,86 $ |
+| Entrada | R bruto | Comisiones | **R neto** | En 3 meses |
+|---|---|---|---|---|
+| **A mercado** (taker 0,06%) | +70,92 | −69,61 | **+1,30** | +0,65 $ |
+| **A límite** (maker 0,02%, 10 bps) | +18,03 | −17,31 | **+0,72** | +0,36 $ |
 
-**Entra siempre con orden límite.** El SL medio de este sistema es 0,69%; a
-mercado, la comisión se lleva el 17% de cada R y anula toda la ventaja.
+**Entra a mercado.** Parece al revés —el taker se lleva el 17% de cada R frente
+al 6% del maker— pero la orden límite sólo se llena el **75%** de las veces, y
+lo que se escapa no es aleatorio:
+
+| | ops | R medio |
+|---|---|---|
+| Se llenan | 3.012 (75%) | **+0,026** |
+| Se escapan | 1.003 (25%) | **+0,655** |
+
+Es **selección adversa**, y el mecanismo es claro: las señales que funcionan son
+las que arrancan de inmediato. Esperar un retroceso de 10 bps selecciona justo
+las que se quedan paradas. Entrar a límite ahorra 52R de comisión y destruye
+53R de beneficio: se cancelan.
+
+⚠️ **Conclusión honesta: con estos parámetros el sistema no tiene ventaja
+explotable después de costes.** Ambas cifras son cero a efectos prácticos. El
+problema de fondo es que el SL medio (0,69%) es demasiado ceñido para el coste
+de transacción: la comisión pesa `2 × comisión / SL`.
 
 ### Por qué no se operan las ROJAS
 

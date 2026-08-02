@@ -138,7 +138,27 @@ def simular(futuras, side, entrada, dist, cierre_sesion_et, cal):
 # ------------------------------------------------------------------
 # RECOGIDA DE CANDIDATAS
 # ------------------------------------------------------------------
-def recoger(sym, dias, paso, verbose=True):
+def buscar_fill(futuras, side, limite, espera):
+    """¿Se habria llenado una orden LIMITE a ese precio, y cuando?
+
+    Esta es LA pregunta que decide el sistema. Entrar a limite baja la comision
+    de 0.174R a 0.058R por operacion, pero solo si la orden se llena. Y no se
+    llena siempre: cuando el precio arranca y no vuelve, te quedas fuera... y
+    esas suelen ser justo las ganadoras. A eso se le llama seleccion adversa, y
+    es lo que puede convertir un +47% teorico en mucho menos.
+
+    Devuelve el indice de la vela donde se llena, o None si no se lleno en
+    `espera` velas (entonces la operacion no existe: no la has cogido).
+    """
+    for k, v in enumerate(futuras[:espera]):
+        if side == "long" and float(v[3]) <= limite:
+            return k
+        if side == "short" and float(v[2]) >= limite:
+            return k
+    return None
+
+
+def recoger(sym, dias, paso, verbose=True, limite_bps=0.0, espera=6, usar_limite=True):
     """Recorre el historial del activo y devuelve todas las candidatas con su
     resultado simulado. Los umbrales se ponen al minimo a proposito: filtrar
     viene despues, en memoria."""
@@ -170,10 +190,15 @@ def recoger(sym, dias, paso, verbose=True):
     ts5r = [int(v[0]) for v in k5r]
     grupos = sesion.agrupar_por_sesion(k5, cal)
 
-    # umbrales al minimo durante la recogida
-    guardado = (C.MIN_SCORE, C.MIN_PROB, C.EXIGIR_CONFLUENCIA, C.THRESHOLD_MODE)
+    # Umbrales al minimo durante la recogida: filtrar viene despues, en memoria.
+    # OPERAR_ROJAS incluido, porque si el motor descarta las rojas antes de que
+    # las veamos, la herramienta de calibracion ya no puede compararlas y se
+    # vuelve ciega justo a la decision que la config acaba de tomar.
+    guardado = (C.MIN_SCORE, C.MIN_PROB, C.EXIGIR_CONFLUENCIA, C.THRESHOLD_MODE,
+                C.OPERAR_ROJAS)
     C.MIN_SCORE, C.MIN_PROB = 0, 0.0
     C.EXIGIR_CONFLUENCIA, C.THRESHOLD_MODE = False, "FIJO"
+    C.OPERAR_ROJAS = True
 
     candidatas = []
     try:
@@ -203,9 +228,39 @@ def recoger(sym, dias, paso, verbose=True):
                     i5r = bisect.bisect_right(ts5r, lim)
                     futuras = k5r[i5r:bisect.bisect_left(ts5r, cierre_ms)]
                     if futuras:
-                        res = simular(futuras, ens["side"], r["m5"]["price"],
+                        precio = r["m5"]["price"]
+                        # --- entrada a LIMITE (o a mercado si usar_limite=False) ---
+                        if usar_limite:
+                            signo = -1 if ens["side"] == "long" else 1
+                            limite = precio * (1 + signo * limite_bps / 10000.0)
+                            k_fill = buscar_fill(futuras, ens["side"], limite, espera)
+                            if k_fill is None:
+                                # no se lleno: la operacion NO existe. Se guarda
+                                # igual para poder medir cuantas te pierdes y si
+                                # eran mejores o peores que las que si entran.
+                                res_perdida = simular(futuras, ens["side"], precio,
+                                                      plan["dist"], cierra, cal)
+                                candidatas.append({
+                                    "sym": sym, "fecha": fecha, "hora": t.time(),
+                                    "min_sesion": (t - abre).total_seconds() / 60.0,
+                                    "side": ens["side"], "score": ens["score"],
+                                    "prob": ens["prob"], "n_conf": ens["n_conf"],
+                                    "setup": ens["best"]["name"],
+                                    "aligned": r["aligned"], "sl_pct": plan["sl_pct"],
+                                    "atr_pct": r["m5"].get("atr_pct"), "ts": lim,
+                                    "lleno": False, **res_perdida})
+                                t += dt.timedelta(minutes=paso)
+                                continue
+                            entrada = limite
+                            futuras = futuras[k_fill + 1:]   # simula DESDE la vela siguiente
+                            if not futuras:
+                                t += dt.timedelta(minutes=paso)
+                                continue
+                        else:
+                            entrada = precio
+                        res = simular(futuras, ens["side"], entrada,
                                       plan["dist"], cierra, cal)
-                        candidatas.append({
+                        candidatas.append({"lleno": True,
                             "sym": sym, "fecha": fecha, "hora": t.time(),
                             "min_sesion": (t - abre).total_seconds() / 60.0,
                             "side": ens["side"], "score": ens["score"],
@@ -215,7 +270,8 @@ def recoger(sym, dias, paso, verbose=True):
                             "atr_pct": r["m5"].get("atr_pct"), "ts": lim, **res})
                 t += dt.timedelta(minutes=paso)
     finally:
-        C.MIN_SCORE, C.MIN_PROB, C.EXIGIR_CONFLUENCIA, C.THRESHOLD_MODE = guardado
+        (C.MIN_SCORE, C.MIN_PROB, C.EXIGIR_CONFLUENCIA, C.THRESHOLD_MODE,
+         C.OPERAR_ROJAS) = guardado
 
     if verbose:
         print(f"  {sym:<12} {len(grupos):>2} sesiones, {len(candidatas):>4} candidatas")
@@ -247,6 +303,8 @@ def aplicar(candidatas, min_score, min_prob, exigir_conf, single_strong,
     anterior cerraria por cooldown)."""
     pasan = []
     for c in candidatas:
+        if not c.get("lleno", True):
+            continue          # la orden limite no se lleno: no hay operacion
         if c["score"] < min_score or c["prob"] < min_prob:
             continue
         if exigir_conf and c["n_conf"] < 2:
@@ -334,13 +392,31 @@ def main():
     ap.add_argument("--detalle", action="store_true", help="lista cada operacion")
     ap.add_argument("--comision", type=float, default=0.06,
                     help="comision por lado en %% (0.06 = taker de Bitget; 0.02 = maker)")
+    ap.add_argument("--mercado", action="store_true",
+                    help="entrar a mercado (por defecto se simula orden LIMITE)")
+    ap.add_argument("--limite-bps", type=float, default=0.0, dest="limite_bps",
+                    help="cuanto mejor que el precio de señal se pone el limite, en bps")
+    ap.add_argument("--espera", type=int, default=6,
+                    help="velas de 5m que se espera a que la limite se llene (6 = 30 min)")
+    ap.add_argument("--sl-min", type=float, default=None, dest="sl_min",
+                    help="sobreescribe C.SL_MIN_PCT: el coste en R es 2*comision/SL, "
+                         "asi que ensanchar el stop diluye la comision")
     a = ap.parse_args()
 
+    if a.sl_min is not None:
+        C.SL_MIN_PCT = a.sl_min
+        print(f"[config] SL_MIN_PCT sobreescrito a {a.sl_min}%")
+
     symbols = [s.upper() for s in a.symbols] or C.ACTIVOS
-    print(f"Bajando y recorriendo {len(symbols)} activos, {a.dias} dias, paso {a.paso}m...\n")
+    modo = ("orden LIMITE" if not a.mercado else "orden a MERCADO")
+    print(f"Bajando y recorriendo {len(symbols)} activos, {a.dias} dias, paso {a.paso}m")
+    print(f"Entrada: {modo}"
+          + (f" ({a.limite_bps:g} bps, hasta {a.espera} velas de espera)"
+             if not a.mercado else "") + "\n")
     todas = []
     for s in symbols:
-        todas += recoger(s, a.dias, a.paso)
+        todas += recoger(s, a.dias, a.paso, limite_bps=a.limite_bps,
+                         espera=a.espera, usar_limite=not a.mercado)
 
     if not todas:
         print("\nSin candidatas. ¿Historial suficiente?")
@@ -388,6 +464,35 @@ def main():
         ops = aplicar(todas, C.MIN_SCORE, C.MIN_PROB, C.EXIGIR_CONFLUENCIA,
                       C.SINGLE_STRONG_SCORE, vs, C.SEM_VERDE_PROB)
         print(_fila(f"SEM_VERDE_SCORE = {vs}", resumen(ops), a.capital))
+
+    # --- LLENADO DE LA ORDEN LIMITE: la pregunta que decide el sistema ---
+    if not a.mercado:
+        # Se compara solo entre candidatas que habrian pasado el filtro VERDE,
+        # que son las que de verdad se operan.
+        elegibles = [c for c in todas
+                     if c["score"] >= C.SEM_VERDE_SCORE and c["prob"] >= C.SEM_VERDE_PROB
+                     and c["aligned"]]
+        llenas = [c for c in elegibles if c.get("lleno")]
+        perdidas = [c for c in elegibles if not c.get("lleno")]
+        print(f"\n### LLENADO DE LA ORDEN LIMITE "
+              f"({a.limite_bps:g} bps, {a.espera} velas de espera)")
+        if elegibles:
+            tasa = len(llenas) / len(elegibles) * 100
+            print(f"  señales VERDE elegibles : {len(elegibles)}")
+            print(f"  se habrian llenado      : {len(llenas)} ({tasa:.1f}%)")
+            print(f"  te habrias perdido      : {len(perdidas)} ({100-tasa:.1f}%)")
+            if llenas and perdidas:
+                r_ll = st.mean([c["r_verde"] for c in llenas])
+                r_pe = st.mean([c["r_verde"] for c in perdidas])
+                print(f"\n  R medio de las que SI se llenan : {r_ll:+.3f}")
+                print(f"  R medio de las que te PIERDES   : {r_pe:+.3f}")
+                if r_pe > r_ll:
+                    print(f"  -> SELECCION ADVERSA: las que se escapan eran MEJORES")
+                    print(f"     ({r_pe - r_ll:+.3f}R de diferencia). Es el coste oculto")
+                    print(f"     de entrar a limite, y no aparece en la comision.")
+                else:
+                    print(f"  -> Sin seleccion adversa: las que se escapan no eran")
+                    print(f"     mejores ({r_pe - r_ll:+.3f}R). Entrar a limite sale gratis.")
 
     # --- barrido combinado: lo que las tablas de una sola variable no ven ---
     # Las tablas anteriores mueven una palanca dejando el resto fijo, asi que no
