@@ -1,4 +1,38 @@
 {
-  "posiciones": [],
+  "posiciones": [
+    {
+      "id": "HOODUSDT-1785773340",
+      "sym": "HOODUSDT",
+      "side": "short",
+      "entrada": 91.45,
+      "sl": 92.23526844997585,
+      "sl_ini": 92.23526844997585,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 90.66473155002416
+        },
+        {
+          "r": 1.7,
+          "precio": 90.11504363504106
+        },
+        {
+          "r": 2.5,
+          "precio": 89.48682887506038
+        }
+      ],
+      "verde": true,
+      "setup": "SMC_REVERSAL",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785773340
+    }
+  ],
   "historial": []
 }
