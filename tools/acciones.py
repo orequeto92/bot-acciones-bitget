@@ -352,10 +352,13 @@ def formatear(r):
         L.append(f"Gap de hoy: {g['pct']:+.2f}% ({g['direccion']}) | cierre previo "
                  f"{g['cierre_previo']:.{dec}f}" + (" | ya rellenado" if g["cerrado"] else ""))
     L.append("")
-    L.append("📌 ENTRA CON LIMITE PEGADA AL PRECIO (en el bid si es LONG, en el "
-             "ask si es SHORT), a 1-2 bps como mucho. NO esperes un retroceso: a "
-             "10 bps solo entra el 75% y lo que se escapa vale +0.655R frente a "
-             "+0.026R de lo que entra. A 1 bps entra el 91% y cobras maker.")
+    L.append("📌 ORDEN LIMITE + POST ONLY (solo maker). Con Post Only la orden o "
+             "entra como maker o Bitget la rechaza: es imposible pagar taker sin "
+             "querer. Si te la rechaza, vuelve a ponerla al precio de pantalla.")
+    L.append("   A mercado pagas 0.06% y el sistema NO tiene ventaja. A 0.02% "
+             "(maker) SI la tiene. Es la diferencia entre operar y no operar.")
+    L.append(f"   Si el precio ya se movio, recalcula: 1 bps {'debajo' if ens['side']=='long' else 'encima'} "
+             f"del precio ACTUAL, no de {price:.{dec}f} (esta señal caduca en minutos).")
     L.append("")
     partes = " | ".join(f"{d['name']}:{d['prob']:.2f}/{d['score']}" for d in ens["confirmantes"])
     aligned_txt = f" HTF aligned +{C.HTF_BONUS}" if r["aligned"] else ""
