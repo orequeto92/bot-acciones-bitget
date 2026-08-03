@@ -1,41 +1,39 @@
-name: Bot Acciones Bitget (escaneo en sesion + seguimiento + Telegram)
+name: Bot Acciones Bitget (servicio de sesion + Telegram)
 
-# Ejecuta en la nube, sin servidor propio:
-#   1) COMANDOS: procesa lo que le mandas por Telegram (/saldo, /parar, /sesion...)
-#   2) SEGUIMIENTO: revisa lo abierto y avisa de TP/SL/break-even/cierre de sesion
-#   3) ESCANEO: busca entradas nuevas y las manda a Telegram
-#   4) Guarda el estado (posiciones + ajustes) en el propio repo
+# UN disparo que se queda vivo toda la sesion, en vez de 78 que quiza no ocurran.
 #
-# CONFIGURACION (una sola vez):
-#   Settings -> Secrets and variables -> Actions -> New repository secret:
-#     TELEGRAM_TOKEN    = token de @BotFather   (un bot NUEVO, no el de cripto)
-#     TELEGRAM_CHAT_ID  = id del canal/grupo (-100...) o @tu_canal
+# POR QUE. La version anterior usaba cron cada 5 minutos. Medido en la primera
+# sesion real (3-ago-2026): de ~42 ejecuciones esperadas desde la apertura,
+# GitHub lanzo UNA. Los cron de Actions se retrasan y se descartan bajo carga,
+# y en repos publicos pasa constantemente. El efecto no era solo perder señales:
+# el SEGUIMIENTO tampoco corria, asi que nadie avisaba de TP1 (ni de mover el SL
+# a break-even) ni del cierre de sesion.
 #
-# POR QUE EL CRON NO ES 24/7
-# --------------------------
-# Este bot solo opera de 9:30 a 16:00 ET. Lanzarlo de madrugada seria quemar
-# minutos de Actions para que el propio bot conteste "mercado cerrado".
+# Ahora tools/servicio.py hace el ciclo cada 5 min DENTRO de un solo job. Un job
+# aguanta hasta 6 horas y la sesion dura 6.5, asi que van dos tandas:
+#   · 13:20 UTC -> cubre desde antes de la apertura (13:30 UTC = 9:30 ET)
+#   · 19:00 UTC -> cubre el tramo final y el cierre (20:00 UTC = 16:00 ET)
+# El horario va en UTC y no entiende de horario de verano, asi que se lanza
+# ancho y el reloj de tools/sesion.py decide de verdad.
 #
-# El cron de GitHub va en UTC y NO entiende de horario de verano, asi que la
-# ventana se fija ancha y el reloj de tools/sesion.py decide de verdad:
-#     sesion 9:30-16:00 ET = 13:30-20:00 UTC en verano (EDT)
-#                          = 14:30-21:00 UTC en invierno (EST)
-# Con 13-21 UTC quedan cubiertos los dos regimenes, mas un margen por los
-# retrasos habituales del cron gratuito.
-#
-# OJO CON LOS MINUTOS: en repo PRIVADO el plan gratis da 2000 min/mes y esto
-# consume mas (~9h/dia x 12 ejecuciones/h x 5 dias). Si lo quieres 24/5 sin
-# pagar, pon el repo en PUBLICO (Actions es ilimitado): aqui no hay nada
-# sensible, las credenciales viven en Secrets y no en el codigo.
+# CONFIGURACION (una vez): Settings -> Secrets and variables -> Actions:
+#     TELEGRAM_TOKEN    = token de @BotFather
+#     TELEGRAM_CHAT_ID  = id de tu chat
 
 on:
   schedule:
-    - cron: "*/5 13-21 * * 1-5"    # sesion de acciones US (ventana ancha por el DST)
-    - cron: "*/15 7-12 * * 1-5"    # materias primas: manana europea, mas espaciado
+    - cron: "20 13 * * 1-5"     # tanda 1: desde antes de la apertura US
+    - cron: "0 19 * * 1-5"      # tanda 2: tramo final y cierre
+    - cron: "0 7 * * 1-5"       # materias primas: manana europea
   workflow_dispatch:
+    inputs:
+      minutos:
+        description: "Minutos que se queda vivo el servicio"
+        required: false
+        default: "350"
 
 permissions:
-  contents: write             # para guardar el estado en el repo
+  contents: write
 
 concurrency:
   group: acciones
@@ -44,7 +42,7 @@ concurrency:
 jobs:
   acciones:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 360        # tope de GitHub para un job
     steps:
       - uses: actions/checkout@v4
 
@@ -52,44 +50,22 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Va PRIMERO y en serio: si el canal esta roto la ejecucion se pone en
-      # ROJO. Antes todos los pasos salian verdes aunque el bot estuviese mudo,
-      # que es la peor combinacion posible en un bot de señales.
-      - name: 0) Comprobar que el canal de Telegram funciona
+      - name: Comprobar que el canal de Telegram funciona
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python tools/diagnostico.py
 
-      - name: 1) Procesar comandos de Telegram (/saldo, /activar, /sesion...)
+      - name: Servicio de sesion (ciclo cada 5 min)
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python tools/control.py
+        run: python tools/servicio.py --intervalo 300 --minutos ${{ github.event.inputs.minutos || 350 }}
 
-      - name: 2) Seguimiento (TP/SL/break-even/cierre de sesion)
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python tools/seguimiento.py --telegram
-
-      - name: 3) Escaneo de entradas nuevas (se autodescarta si el mercado esta cerrado)
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python tools/acciones.py --telegram --registrar
-
-      # OJO CON ESTE PASO: antes ponia
-      #     git add datos/posiciones.json datos/ajustes.json
-      # y NUNCA guardo nada. `git add` con varias rutas es atomico: si UNA no
-      # existe falla entero y no prepara ninguna. En un arranque limpio no hay
-      # posiciones.json, asi que el estado se perdia en cada ejecucion:
-      #   · tg_offset perdido -> el mismo comando de Telegram se repetia cada 5 min
-      #   · posiciones perdidas -> sin seguimiento de TP/SL
-      #   · cooldown perdido -> la misma señal reemitida cada 5 min
-      # `git add -A -- datos/` no tiene ese problema (y respeta el .gitignore,
-      # asi que no sube datos/cache/).
-      - name: 4) Guardar estado (posiciones + ajustes)
+      # if:always() para que el estado se guarde aunque el servicio muera por
+      # timeout. `git add -A -- datos/` porque `git add` con varias rutas es
+      # atomico y fallaba entero si una no existia.
+      - name: Guardar estado (posiciones + ajustes)
         if: always()
         run: |
           git config user.name "acciones-bot"
