@@ -1,5 +1,6 @@
 {
-  "posiciones": [
+  "posiciones": [],
+  "historial": [
     {
       "id": "HOODUSDT-1785773340",
       "sym": "HOODUSDT",
@@ -23,16 +24,19 @@
       ],
       "verde": true,
       "setup": "SMC_REVERSAL",
-      "estado": "activa",
+      "estado": "cerrada",
       "hitos": {
         "tp1": false,
         "tp2": false,
         "tp3": false,
-        "sl": false,
+        "sl": true,
         "be": false
       },
-      "abierta_ts": 1785773340
+      "abierta_ts": 1785773340,
+      "cierre": "SL",
+      "cerrada_ts": 1785779760,
+      "precio_cierre": 92.24,
+      "resultado_r": -1.0
     }
-  ],
-  "historial": []
+  ]
 }
