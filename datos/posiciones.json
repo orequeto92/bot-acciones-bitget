@@ -1,5 +1,336 @@
 {
-  "posiciones": [],
+  "posiciones": [
+    {
+      "id": "NFLXUSDT-1785851867",
+      "sym": "NFLXUSDT",
+      "side": "long",
+      "entrada": 73.48,
+      "sl": 72.37974382549896,
+      "sl_ini": 72.37974382549896,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 74.58025617450105
+        },
+        {
+          "r": 1.7,
+          "precio": 75.35043549665177
+        },
+        {
+          "r": 2.5,
+          "precio": 76.2306404362526
+        }
+      ],
+      "verde": true,
+      "setup": "MOMENTUM_SHIFT",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785851867
+    },
+    {
+      "id": "MSFTUSDT-1785851867",
+      "sym": "MSFTUSDT",
+      "side": "long",
+      "entrada": 490.03,
+      "sl": 478.7361325752736,
+      "sl_ini": 478.7361325752736,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 501.32386742472636
+        },
+        {
+          "r": 1.7,
+          "precio": 509.2295746220348
+        },
+        {
+          "r": 2.5,
+          "precio": 518.2646685618159
+        }
+      ],
+      "verde": true,
+      "setup": "MOMENTUM_SHIFT",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785851867
+    },
+    {
+      "id": "GOOGLUSDT-1785854051",
+      "sym": "GOOGLUSDT",
+      "side": "long",
+      "entrada": 376.29,
+      "sl": 366.9854864220002,
+      "sl_ini": 366.9854864220002,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 385.59451357799986
+        },
+        {
+          "r": 1.7,
+          "precio": 392.1076730825998
+        },
+        {
+          "r": 2.5,
+          "precio": 399.5512839449996
+        }
+      ],
+      "verde": true,
+      "setup": "TREND_PULLBACK",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785854051
+    },
+    {
+      "id": "NATGASUSDT-1785862748",
+      "sym": "NATGASUSDT",
+      "side": "short",
+      "entrada": 2.68,
+      "sl": 2.7014400000000003,
+      "sl_ini": 2.7014400000000003,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 2.65856
+        },
+        {
+          "r": 1.7,
+          "precio": 2.643552
+        },
+        {
+          "r": 2.5,
+          "precio": 2.6264000000000003
+        }
+      ],
+      "verde": true,
+      "setup": "LIQUIDITY_GRAB",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785862748
+    },
+    {
+      "id": "IRENUSDT-1785865235",
+      "sym": "IRENUSDT",
+      "side": "long",
+      "entrada": 41.301,
+      "sl": 40.685335824254246,
+      "sl_ini": 40.685335824254246,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 41.91666417574576
+        },
+        {
+          "r": 1.7,
+          "precio": 42.34762909876779
+        },
+        {
+          "r": 2.5,
+          "precio": 42.840160439364396
+        }
+      ],
+      "verde": true,
+      "setup": "MOMENTUM_SHIFT",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785865235
+    },
+    {
+      "id": "WDCUSDT-1785865547",
+      "sym": "WDCUSDT",
+      "side": "long",
+      "entrada": 559.85,
+      "sl": 546.9993583351118,
+      "sl_ini": 546.9993583351118,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 572.7006416648883
+        },
+        {
+          "r": 1.7,
+          "precio": 581.69609083031
+        },
+        {
+          "r": 2.5,
+          "precio": 591.9766041622206
+        }
+      ],
+      "verde": true,
+      "setup": "BREAKOUT",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785865547
+    },
+    {
+      "id": "TSLAUSDT-1785868361",
+      "sym": "TSLAUSDT",
+      "side": "long",
+      "entrada": 327.92,
+      "sl": 324.76388963836615,
+      "sl_ini": 324.76388963836615,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 331.0761103616339
+        },
+        {
+          "r": 1.7,
+          "precio": 333.28538761477756
+        },
+        {
+          "r": 2.5,
+          "precio": 335.8102759040847
+        }
+      ],
+      "verde": true,
+      "setup": "MOMENTUM_SHIFT",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785868361
+    },
+    {
+      "id": "AMZNUSDT-1785868674",
+      "sym": "AMZNUSDT",
+      "side": "long",
+      "entrada": 278.2,
+      "sl": 275.9744,
+      "sl_ini": 275.9744,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 280.4256
+        },
+        {
+          "r": 1.7,
+          "precio": 281.98352
+        },
+        {
+          "r": 2.5,
+          "precio": 283.764
+        }
+      ],
+      "verde": true,
+      "setup": "LIQUIDITY_GRAB",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785868674
+    },
+    {
+      "id": "BMNRUSDT-1785869609",
+      "sym": "BMNRUSDT",
+      "side": "long",
+      "entrada": 17.934,
+      "sl": 17.664365009325163,
+      "sl_ini": 17.664365009325163,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 18.20363499067484
+        },
+        {
+          "r": 1.7,
+          "precio": 18.392379484147227
+        },
+        {
+          "r": 2.5,
+          "precio": 18.608087476687096
+        }
+      ],
+      "verde": true,
+      "setup": "BREAKOUT",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785869609
+    },
+    {
+      "id": "ARMUSDT-1785870232",
+      "sym": "ARMUSDT",
+      "side": "long",
+      "entrada": 282.69,
+      "sl": 276.7003069576471,
+      "sl_ini": 276.7003069576471,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 288.6796930423529
+        },
+        {
+          "r": 1.7,
+          "precio": 292.8724781719999
+        },
+        {
+          "r": 2.5,
+          "precio": 297.6642326058822
+        }
+      ],
+      "verde": true,
+      "setup": "BREAKOUT",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785870232
+    }
+  ],
   "historial": [
     {
       "id": "HOODUSDT-1785773340",
@@ -37,6 +368,391 @@
       "cerrada_ts": 1785779760,
       "precio_cierre": 92.24,
       "resultado_r": -1.0
+    },
+    {
+      "id": "MUUSDT-1785850609",
+      "sym": "MUUSDT",
+      "side": "short",
+      "entrada": 871.44,
+      "sl": 885.2243738534106,
+      "sl_ini": 885.2243738534106,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 857.6556261465895
+        },
+        {
+          "r": 1.7,
+          "precio": 848.0065644492021
+        },
+        {
+          "r": 2.5,
+          "precio": 836.9790653664736
+        }
+      ],
+      "verde": true,
+      "setup": "LIQUIDITY_GRAB",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": false
+      },
+      "abierta_ts": 1785850609,
+      "cierre": "SL",
+      "cerrada_ts": 1785851227
+    },
+    {
+      "id": "SNDKUSDT-1785850609",
+      "sym": "SNDKUSDT",
+      "side": "short",
+      "entrada": 1382.48,
+      "sl": 1415.252674098753,
+      "sl_ini": 1415.252674098753,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 1349.707325901247
+        },
+        {
+          "r": 1.7,
+          "precio": 1326.76645403212
+        },
+        {
+          "r": 2.5,
+          "precio": 1300.5483147531177
+        }
+      ],
+      "verde": true,
+      "setup": "LIQUIDITY_GRAB",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": false
+      },
+      "abierta_ts": 1785850609,
+      "cierre": "SL",
+      "cerrada_ts": 1785851542
+    },
+    {
+      "id": "QCOMUSDT-1785851240",
+      "sym": "QCOMUSDT",
+      "side": "short",
+      "entrada": 157.73,
+      "sl": 159.10194957423334,
+      "sl_ini": 159.10194957423334,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 156.35805042576663
+        },
+        {
+          "r": 1.7,
+          "precio": 155.39768572380328
+        },
+        {
+          "r": 2.5,
+          "precio": 154.3001260644166
+        }
+      ],
+      "verde": true,
+      "setup": "LIQUIDITY_GRAB",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": false
+      },
+      "abierta_ts": 1785851240,
+      "cierre": "SL",
+      "cerrada_ts": 1785852481
+    },
+    {
+      "id": "INTCUSDT-1785851554",
+      "sym": "INTCUSDT",
+      "side": "short",
+      "entrada": 97.81,
+      "sl": 99.24375938238204,
+      "sl_ini": 99.24375938238204,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 96.37624061761797
+        },
+        {
+          "r": 1.7,
+          "precio": 95.37260904995054
+        },
+        {
+          "r": 2.5,
+          "precio": 94.2256015440449
+        }
+      ],
+      "verde": true,
+      "setup": "LIQUIDITY_GRAB",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": false
+      },
+      "abierta_ts": 1785851554,
+      "cierre": "SL",
+      "cerrada_ts": 1785853106
+    },
+    {
+      "id": "ARMUSDT-1785851240",
+      "sym": "ARMUSDT",
+      "side": "short",
+      "entrada": 264.19,
+      "sl": 270.71794324166507,
+      "sl_ini": 270.71794324166507,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 257.6620567583349
+        },
+        {
+          "r": 1.7,
+          "precio": 253.09249648916938
+        },
+        {
+          "r": 2.5,
+          "precio": 247.87014189583732
+        }
+      ],
+      "verde": true,
+      "setup": "LIQUIDITY_GRAB",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": false
+      },
+      "abierta_ts": 1785851240,
+      "cierre": "SL",
+      "cerrada_ts": 1785853732
+    },
+    {
+      "id": "AMZNUSDT-1785850925",
+      "sym": "AMZNUSDT",
+      "side": "long",
+      "entrada": 277.63,
+      "sl": 277.63,
+      "sl_ini": 275.40896,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 279.85104
+        },
+        {
+          "r": 1.7,
+          "precio": 281.405768
+        },
+        {
+          "r": 2.5,
+          "precio": 283.1826
+        }
+      ],
+      "verde": true,
+      "setup": "SMC_REVERSAL",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": true,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": true
+      },
+      "abierta_ts": 1785850925,
+      "cierre": "BE",
+      "cerrada_ts": 1785854974
+    },
+    {
+      "id": "CRCLUSDT-1785850925",
+      "sym": "CRCLUSDT",
+      "side": "short",
+      "entrada": 62.78,
+      "sl": 62.78,
+      "sl_ini": 63.93246093686537,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 61.627539063134634
+        },
+        {
+          "r": 1.7,
+          "precio": 60.82081640732888
+        },
+        {
+          "r": 2.5,
+          "precio": 59.89884765783658
+        }
+      ],
+      "verde": true,
+      "setup": "LIQUIDITY_GRAB",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": true,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": true
+      },
+      "abierta_ts": 1785850925,
+      "cierre": "BE",
+      "cerrada_ts": 1785855906
+    },
+    {
+      "id": "ASMLUSDT-1785850289",
+      "sym": "ASMLUSDT",
+      "side": "short",
+      "entrada": 1703.24,
+      "sl": 1703.24,
+      "sl_ini": 1716.86592,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 1689.61408
+        },
+        {
+          "r": 1.7,
+          "precio": 1680.075936
+        },
+        {
+          "r": 2.5,
+          "precio": 1669.1752
+        }
+      ],
+      "verde": true,
+      "setup": "SMC_REVERSAL",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": true,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": true
+      },
+      "abierta_ts": 1785850289,
+      "cierre": "BE",
+      "cerrada_ts": 1785856217
+    },
+    {
+      "id": "MSTRUSDT-1785850289",
+      "sym": "MSTRUSDT",
+      "side": "short",
+      "entrada": 94.53,
+      "sl": 96.23605257005082,
+      "sl_ini": 96.23605257005082,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 92.82394742994919
+        },
+        {
+          "r": 1.7,
+          "precio": 91.62971063091362
+        },
+        {
+          "r": 2.5,
+          "precio": 90.26486857487296
+        }
+      ],
+      "verde": true,
+      "setup": "BREAKOUT",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": false
+      },
+      "abierta_ts": 1785850289,
+      "cierre": "SL",
+      "cerrada_ts": 1785858696
+    },
+    {
+      "id": "METAUSDT-1785851554",
+      "sym": "METAUSDT",
+      "side": "long",
+      "entrada": 584.71,
+      "sl": 579.6035920257159,
+      "sl_ini": 579.6035920257159,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 589.8164079742842
+        },
+        {
+          "r": 1.7,
+          "precio": 593.3908935562831
+        },
+        {
+          "r": 2.5,
+          "precio": 597.4760199357104
+        }
+      ],
+      "verde": true,
+      "setup": "GAP_FADE",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": false
+      },
+      "abierta_ts": 1785851554,
+      "cierre": "SL",
+      "cerrada_ts": 1785862118
+    },
+    {
+      "id": "AAPLUSDT-1785853430",
+      "sym": "AAPLUSDT",
+      "side": "short",
+      "entrada": 307.34,
+      "sl": 309.79872,
+      "sl_ini": 309.79872,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 304.88127999999995
+        },
+        {
+          "r": 1.7,
+          "precio": 303.160176
+        },
+        {
+          "r": 2.5,
+          "precio": 301.1932
+        }
+      ],
+      "verde": true,
+      "setup": "LIQUIDITY_GRAB",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": false
+      },
+      "abierta_ts": 1785853430,
+      "cierre": "SL",
+      "cerrada_ts": 1785863360
     }
   ]
 }
