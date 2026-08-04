@@ -224,6 +224,19 @@ def lev_max_propio(sym):
 # ------------------------- MULTIPLICIDAD / COOLDOWN -------------------------
 MAX_TRADES_SIMULTANEOS = 2   # con 50$ son 10$ de margen comprometido
 MAX_POR_ACTIVO = 1
+
+# TOPE POR SECTOR. El 4-ago-2026 el bot emitio 6 señales de semiconductores
+# (ASML, MU, SNDK, QCOM, ARM, INTC) TODAS EN CORTO, en un dia en que el sector
+# entero abrio con gap de +3% a +6%. Perdieron 5 de 6: -4.67R. Las otras 9
+# señales del dia, repartidas entre sectores, sumaron -1.33R.
+#
+# Seis cortos de semis a la vez no son seis apuestas: son UNA apuesta -que el
+# sector se gire- multiplicada por seis. Cuando las estrategias de reversion
+# (SMC_REVERSAL, LIQUIDITY_GRAB) ven "sobrecompra", la ven en todo el sector a
+# la vez, porque el sector se mueve junto.
+#
+# GRUPOS ya existia pero solo se usaba para imprimir el campo "Grupo:".
+MAX_POR_GRUPO = 1
 COOLDOWN_H = 3               # en una sesion de 6.5h esto deja ~2 intentos por activo
 MAX_ROJAS_DIA = 2
 

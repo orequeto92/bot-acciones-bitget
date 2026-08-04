@@ -39,6 +39,27 @@ import config as C
 # COOLDOWN basado en el CICLO DE VIDA de la señal:
 #   - se bloquea un activo mientras tenga una posicion ABIERTA
 #   - el cooldown arranca cuando la señal CIERRA (SL/TP3/BE), no cuando se emite
+def _huecos_libres():
+    """Cuantas posiciones NUEVAS caben, y cuantas hay ya por sector.
+
+    ESTO FALTABA. escanear() cortaba a MAX_TRADES_SIMULTANEOS señales POR CICLO,
+    pero nada impedia que se acumulasen entre ciclos: el bloqueo solo miraba si
+    ESE activo tenia posicion abierta. El 4-ago-2026 el bot llego a tener 8
+    posiciones vivas a la vez con un tope teorico de 2, o sea 40$ de margen
+    comprometido de una cuenta de 50$ y un 8% en riesgo simultaneo.
+
+    Ademas el backtest SI aplicaba el tope global, asi que el sistema medido y
+    el sistema que operaba no eran el mismo sistema.
+    """
+    pos = seguimiento._cargar()
+    activas = [p for p in pos.get("posiciones", []) if p.get("estado") == "activa"]
+    por_grupo = {}
+    for p in activas:
+        g = C.grupo_de(p["sym"])
+        por_grupo[g] = por_grupo.get(g, 0) + 1
+    return max(0, C.MAX_TRADES_SIMULTANEOS - len(activas)), por_grupo, len(activas)
+
+
 def _mapa_bloqueos():
     pos = seguimiento._cargar()
     abiertas = {p["sym"] for p in pos.get("posiciones", []) if p.get("estado") == "activa"}
@@ -433,7 +454,25 @@ def escanear(activos, capital, usar_cooldown=True, verbose=True, ignorar_sesion=
                   f"{'VERDE' if r['verde'] else 'ROJA'}")
         time.sleep(0.12)   # cortesia con la API
     senales.sort(key=lambda r: (r["verde"], r["ens"]["score"]), reverse=True)
-    return senales[:C.MAX_TRADES_SIMULTANEOS], senales, descartes, cerrados
+
+    # --- TOPES DE CARTERA: global y por sector ---
+    huecos, por_grupo, n_abiertas = _huecos_libres()
+    emitir = []
+    for r in senales:
+        if len(emitir) >= huecos:
+            if verbose and huecos == 0:
+                print(f"  · cartera llena: {n_abiertas} posicion(es) abierta(s) "
+                      f"de {C.MAX_TRADES_SIMULTANEOS}")
+            break
+        g = C.grupo_de(r["sym"])
+        usados = por_grupo.get(g, 0) + sum(1 for x in emitir if C.grupo_de(x["sym"]) == g)
+        if usados >= C.MAX_POR_GRUPO:
+            if verbose:
+                print(f"  · {r['sym']:<12} descartada: ya hay {usados} posicion(es) "
+                      f"en '{g}' (tope {C.MAX_POR_GRUPO})")
+            continue
+        emitir.append(r)
+    return emitir, senales, descartes, cerrados
 
 
 def main():

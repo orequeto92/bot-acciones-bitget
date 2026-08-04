@@ -344,6 +344,10 @@ def aplicar(candidatas, min_score, min_prob, exigir_conf, single_strong,
             continue
         if any(s == c["sym"] for _, s in abiertas):
             continue
+        # TOPE POR SECTOR: seis cortos de semis a la vez no son seis apuestas,
+        # son una sola multiplicada por seis (ver config.MAX_POR_GRUPO).
+        if sum(1 for _, s in abiertas if C.grupo_de(s) == C.grupo_de(c["sym"]))                 >= C.MAX_POR_GRUPO:
+            continue
         if c["sym"] in ultimo and t - ultimo[c["sym"]] < C.COOLDOWN_H * 3600_000:
             continue
         dk = (c["sym"], c["fecha"])

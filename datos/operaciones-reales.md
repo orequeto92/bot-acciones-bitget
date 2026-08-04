@@ -169,3 +169,51 @@ añadir. Con una operación no se puede saber.
 **4. El cron de GitHub no disparó.** De ~42 ejecuciones esperadas corrió 1, así
 que el seguimiento no vigiló la posición: ni aviso de SL ni de cierre de sesión.
 Corregido el mismo día con `tools/servicio.py`.
+
+---
+
+## 📊 Sesión completa del 4-ago-2026 (16 señales emitidas)
+
+Primera sesión con el servicio corriendo de verdad. **Resultado: −6,00R**, 33%
+de aciertos sobre 15 señales evaluables.
+
+Pero el resultado es lo de menos. La sesión destapó **dos fallos de gestión de
+riesgo** que hacían que el bot en vivo no fuese el sistema que se había medido:
+
+### 1. El tope de posiciones simultáneas no se aplicaba
+
+`MAX_TRADES_SIMULTANEOS = 2`, pero llegó a haber **8 posiciones vivas a la vez**.
+`escanear()` cortaba a 2 señales *por ciclo*, y el bloqueo sólo miraba si *ese
+activo* tenía posición abierta: no había tope global. Con $5 de margen cada una,
+8 posiciones son $40 de una cuenta de $50 y un 8% en riesgo simultáneo.
+
+Y lo peor: **el backtest sí aplicaba el tope**. O sea que el sistema medido
+(+15,6%) y el que operaba eran sistemas distintos.
+
+### 2. Sin límite de exposición por sector
+
+| Sector | Señales | R |
+|---|---|---|
+| **Semis** | **6, todas SHORT** | **−4,67** |
+| Megacap | 5 | −0,32 |
+| Resto | 4 | −1,00 |
+
+ASML, MU, SNDK, QCOM, ARM e INTC — **todo el sector shorteado a la vez**, en un
+día en que abrió con gaps de +3% a +6%. Perdieron 5 de 6.
+
+Seis cortos de semis no son seis apuestas: son **una apuesta multiplicada por
+seis**. Cuando las estrategias de reversión ven "sobrecompra", la ven en todo el
+sector a la vez, porque el sector se mueve junto. `config.GRUPOS` existía pero
+sólo se usaba para imprimir el campo "Grupo:".
+
+### Corrección y validación
+
+`MAX_POR_GRUPO = 1` + tope global real. Validado sobre 62 sesiones:
+
+| | ops | R neto | t | sesiones para decidir |
+|---|---|---|---|---|
+| Sin tope por sector | 326 | +15,61 | +0,89 | 313 (15 meses) |
+| **Con tope por sector** | **301** | **+18,27** | **+1,07** | **217 (10 meses)** |
+
+Menos operaciones y mejor resultado. Es el primer cambio del proyecto que mejora
+el número **y** parte de una causa entendida, no de ajustar parámetros.
