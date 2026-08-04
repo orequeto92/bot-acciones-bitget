@@ -37,9 +37,70 @@ import sesion, control, seguimiento, acciones, ajustes, telegram
 import config as C
 
 
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOG_SENALES = os.path.join(RAIZ, "datos", "senales.jsonl")
+
+
 def _hay_mercado_abierto():
     """True si alguno de los dos calendarios esta operativo."""
     return any(sesion.estado(cal)["abierto"] for cal in ("US_EQUITY", "COMMODITY"))
+
+
+def anotar_senal(r):
+    """Deja constancia de CADA señal emitida en un log que solo crece.
+
+    posiciones.json es estado vivo: cuando una operacion cierra se archiva y
+    cuando el cooldown pasa deja de contar. Para saber si el sistema funciona
+    hace falta el registro completo de lo que propuso, se operase o no. Ademas
+    el estado solo se guardaba al terminar el job, asi que si el job moria se
+    perdia la sesion entera.
+    """
+    import json
+    ens, plan, m5 = r["ens"], r["plan"], r["m5"]
+    fila = {
+        "ts": int(time.time()),
+        "et": sesion.a_et().strftime("%Y-%m-%d %H:%M"),
+        "sym": r["sym"], "side": ens["side"],
+        "entrada": m5["price"], "limite": plan["limite"], "sl": plan["sl"],
+        "sl_pct": round(plan["sl_pct"], 3),
+        "tps": [round(t["precio"], 4) for t in plan["tps"]],
+        "score": ens["score"], "prob": ens["prob"], "setup": ens["best"]["name"],
+        "verde": r["verde"], "lev": plan["lev"], "qty": round(plan["qty"], 4),
+        "n_conf": ens["n_conf"], "aligned": r["aligned"],
+        "min_sesion": round(r["sesion"].get("desde_apertura") or 0),
+    }
+    try:
+        os.makedirs(os.path.dirname(LOG_SENALES), exist_ok=True)
+        with open(LOG_SENALES, "a", encoding="utf-8") as f:
+            f.write(json.dumps(fila, ensure_ascii=False) + "\n")
+    except OSError as e:
+        print(f"  [log] no se pudo anotar la señal: {e}", flush=True)
+
+
+def guardar_estado(motivo=""):
+    """Commit + push del estado a mitad de sesion.
+
+    El workflow solo guardaba al terminar el job. Con un servicio de 6 horas eso
+    significa que un fallo se lleva por delante todas las señales del dia."""
+    import subprocess
+    try:
+        subprocess.run(["git", "config", "user.name", "acciones-bot"], cwd=RAIZ, check=False)
+        subprocess.run(["git", "config", "user.email",
+                        "acciones-bot@users.noreply.github.com"], cwd=RAIZ, check=False)
+        subprocess.run(["git", "add", "-A", "--", "datos/"], cwd=RAIZ, check=False)
+        hay = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=RAIZ).returncode != 0
+        if not hay:
+            return False
+        subprocess.run(["git", "commit", "-m", f"estado acciones{motivo} [skip ci]"],
+                       cwd=RAIZ, check=False)
+        subprocess.run(["git", "pull", "--rebase", "--autostash"], cwd=RAIZ, check=False)
+        r = subprocess.run(["git", "push"], cwd=RAIZ, capture_output=True)
+        print(f"  [estado] guardado{motivo}" if r.returncode == 0
+              else f"  [estado] push fallo: {r.stderr.decode()[:120]}", flush=True)
+        return r.returncode == 0
+    except Exception as e:
+        print(f"  [estado] error: {e}", flush=True)
+        return False
 
 
 def ciclo(n, con_telegram=True):
@@ -85,10 +146,12 @@ def ciclo(n, con_telegram=True):
             for r in top:
                 texto = acciones.formatear(r)
                 print("\n" + texto, flush=True)
+                anotar_senal(r)          # log permanente, se opere o no
                 if con_telegram and telegram.configurado() and telegram.enviar(texto):
                     enviadas += 1
             seguimiento.registrar(top)
             print(f"  [escaneo] {enviadas}/{len(top)} enviadas y registradas", flush=True)
+            guardar_estado(" (señal nueva)")   # no esperar al final del job
     except Exception as e:
         print(f"  [escaneo] error: {e}", flush=True)
         traceback.print_exc()
