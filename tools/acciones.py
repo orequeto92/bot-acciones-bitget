@@ -360,6 +360,13 @@ def formatear(r):
     L.append(f"   Si el precio ya se movio, recalcula: 1 bps {'debajo' if ens['side']=='long' else 'encima'} "
              f"del precio ACTUAL, no de {price:.{dec}f} (esta señal caduca en minutos).")
     L.append("")
+    L.append(f"⚠️ SI ENTRAS A OTRO PRECIO, RECALCULA LOS TP. El SL ({plan['sl']:.{dec}f}) es "
+             f"estructural y NO se mueve, asi que entrar mas {'abajo' if ens['side']=='long' else 'arriba'} "
+             f"acorta tu 1R y los TP de arriba se quedan lejisimos.")
+    L.append(f"   tu 1R = |SL - tu entrada|   ->   TP1 = entrada {'+' if ens['side']=='long' else '-'} 1R, "
+             f"TP2 {'+' if ens['side']=='long' else '-'} 1.7R, TP3 {'+' if ens['side']=='long' else '-'} 2.5R")
+    L.append(f"   y el break-even tras TP1 es TU entrada, no la de la señal.")
+    L.append("")
     partes = " | ".join(f"{d['name']}:{d['prob']:.2f}/{d['score']}" for d in ens["confirmantes"])
     aligned_txt = f" HTF aligned +{C.HTF_BONUS}" if r["aligned"] else ""
     L.append(f"Motivo: [ENSEMBLE {ens['n_conf']}x] {partes} || Best={best['name']}: "
