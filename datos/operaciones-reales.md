@@ -10,7 +10,41 @@ el sistema tiene ventaja (faltan ~53 sesiones desde el 3-ago-2026).
 | # | Fecha | Activo | Lado | Entrada | Salida | R | Comisión |
 |---|---|---|---|---|---|---|---|
 | 1 | 3-ago-2026 | HOODUSDT | SHORT | 91,46 | 92,24 (SL) | **−1,00** | taker 0,0594% |
-| 2 | 4-ago-2026 | MSTRUSDT | SHORT | 95,23 | *abierta* | — | **maker 0,0200%** ✅ |
+| 2 | 4-ago-2026 | MSTRUSDT | SHORT | 95,23 | 94,19 (manual) | **+0,95** | entrada maker 0,0200% / salida taker 0,0600% |
+
+---
+
+## #2 — MSTRUSDT SHORT (4-ago-2026) — ✅ +0,95R
+
+```
+Señal    09:31 ET   entrada límite 94,54 | SL 96,24 | Score 82 | BREAKOUT | VERDE
+Entrada  08:35      95,23 con Post Only  -> comisión 0,00895162 = 0,0200% MAKER
+Salida   09:19      94,19 a mercado      -> comisión 0,02656122 = 0,0600% TAKER
+```
+
+**Bruto +0,4888 $ (+1,03R) · comisiones −0,0355 $ · NETO +0,4533 $ (+0,95R)**
+
+Las comisiones se llevaron el **7% de la ganancia bruta**.
+
+### Lo que enseñó
+
+**1. La salida también cuenta, y yo no la había modelado.** El backtest asumía
+0,02% en las dos patas (0,04% ida y vuelta). La realidad de esta operación fue
+**0,08%** —el doble— porque el cierre a mercado paga taker.
+
+→ Poner los **TP como órdenes límite** para que las salidas ganadoras cobren
+maker. El SL siempre será taker (es stop-market, no hay alternativa).
+
+**2. Entró 0,73% más alto que la señal, y eso cambió todo lo demás.** Como el SL
+es estructural (96,24) y no se mueve, su 1R real fue 1,01 en vez de 1,71 — el
+59%. Los TP de la señal, aplicados a su entrada, equivalían a 2,39R / 3,56R /
+4,92R. Sus TP correctos eran 94,22 / 93,51 / 92,71.
+
+**3. Cerró el 100% en ~1R en vez de escalonar.** Salió bien (MSTR rebotó a 94,60
+justo después, así que el timing fue acertado), pero como hábito destruye la
+ventaja: con 53% de aciertos, si la ganadora vale 1R y la perdedora −1R la
+esperanza es +0,06R y las comisiones se la comen. **La rentabilidad del sistema
+viene de que las ganadoras lleguen a 1,7R y 2,5R.**
 
 ---
 

@@ -398,6 +398,8 @@ def main():
                     help="cuanto mejor que el precio de señal se pone el limite, en bps")
     ap.add_argument("--espera", type=int, default=6,
                     help="velas de 5m que se espera a que la limite se llene (6 = 30 min)")
+    ap.add_argument("--tp-unico", action="store_true", dest="tp_unico",
+                    help="cierra el 100%% en TP1 en vez de escalonar 33/33/34")
     ap.add_argument("--tf", default=None,
                     help="marco temporal de escaneo (5m, 15m, 30m, 1h). Subirlo hace "
                          "los movimientos mas grandes y diluye la comision")
@@ -409,6 +411,14 @@ def main():
     if a.sl_min is not None:
         C.SL_MIN_PCT = a.sl_min
         print(f"[config] SL_MIN_PCT sobreescrito a {a.sl_min}%")
+    if a.tp_unico:
+        # Cerrar el 100% en TP1 en vez de escalonar 33/33/34. Es lo que sale
+        # solo cuando uno cierra "por si acaso" en cuanto va ganando, y conviene
+        # saber cuanto cuesta: con 53% de aciertos, si la ganadora vale 1R y la
+        # perdedora -1R, la esperanza es +0.06R y las comisiones se la comen.
+        C.TP_R = [1.0]
+        C.TP_PARCIAL = [1.0]
+        print("[config] cerrando el 100% en TP1 (sin escalera 33/33/34)")
     if a.tf:
         # Subir el marco temporal es la via que ataca la raiz del problema: el
         # coste es 2*comision/SL, y en 15m o 30m los movimientos (y por tanto
