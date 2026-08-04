@@ -197,16 +197,29 @@ desploma un 88%. **La ventaja de estas estrategias vive en el 5m.**
 
 ## ⚠️ VEREDICTO: prometedor pero aún no demostrado
 
-La mejor configuración **alcanzable** (sólo VERDES, SL mínimo 0,80%, entrada
-límite a 1 bps con comisión maker) da **+25,9% de la cuenta por trimestre**,
-pero con `t = 1,47`. Hace falta `|t| ≥ 2`. **Todavía no está demostrada.**
+Estimación actual, con **todo** lo medido en operaciones reales:
+**+15,6% de la cuenta por trimestre, `t = 0,89`.** Hace falta `|t| ≥ 2`, así que
+**no está demostrada**.
 
-Lo que sí ha cambiado es cuánto falta para saberlo:
+### Cómo se fue corrigiendo la estimación
+
+Cada dato real tumbó una suposición optimista del modelo:
+
+| | %/trim | t | Qué se descubrió |
+|---|---|---|---|
+| Primer cálculo | +47,7% | — | *(maker en ambas patas, 100% llenado, sin deslizamiento)* |
+| Selección adversa | +25,9% | +1,47 | la límite sólo entra el 91% |
+| Comisión de salida (op #2) | +12,9% | +0,74 | salir a mercado paga taker |
+| Deslizamiento del SL (op #3) | +8,8% | +0,50 | el stop se ejecuta peor que su nivel |
+| **+ TP a límite** | **+15,6%** | **+0,89** | las salidas ganadoras cobran maker |
+
+**El signo siempre salió positivo**, en todas las configuraciones medidas. Lo
+que no hay es potencia estadística para demostrarlo.
 
 | | sesiones necesarias | tiempo |
 |---|---|---|
-| Config a taker | 1.226 | **4,9 años** |
-| **Config alcanzable** | **115** (te faltan 53) | **2,5 meses** |
+| Cuando se creía maker/maker | 115 | 5 meses |
+| **Con todo lo medido** | **313** | **15 meses** |
 
 ### El plan sensato
 
