@@ -11,6 +11,50 @@ el sistema tiene ventaja (faltan ~53 sesiones desde el 3-ago-2026).
 |---|---|---|---|---|---|---|---|
 | 1 | 3-ago-2026 | HOODUSDT | SHORT | 91,46 | 92,24 (SL) | **−1,00** | taker 0,0594% |
 | 2 | 4-ago-2026 | MSTRUSDT | SHORT | 95,23 | 94,19 (manual) | **+0,95** | entrada maker 0,0200% / salida taker 0,0600% |
+| 3 | 4-ago-2026 | AAPLUSDT | SHORT | 307,40 | 309,87 (SL) | **−1,13** | entrada maker 0,0200% / salida taker 0,0600% |
+
+**Balance: −1,32R = −0,66 $ en 3 operaciones.** Ruido puro.
+
+---
+
+## #3 — AAPLUSDT SHORT (4-ago-2026) — ❌ SL, −1,13R
+
+**La mejor ejecución hasta ahora**, y por eso el dato es tan limpio:
+
+| | Señal | Real | Desvío |
+|---|---|---|---|
+| Entrada | 307,37 | 307,40 | **0,010%** |
+| SL | 309,80 | 309,80 | **0** |
+| Cantidad | 0,2034 | 0,2000 | −1,67% |
+
+TP escalonados en 304,88 y 303,16 (TP1 y TP2 de la señal). Post Only en la
+entrada → **0,0200% maker** otra vez.
+
+### El dato nuevo: una perdedora cuesta más de 1R
+
+```
+1R de diseño        0,4800 $   (SL 309,80)
+pérdida por precio -0,4940 $ = -1,029R   <- el SL saltó en 309,87, no en 309,80
+comisiones         -0,0495 $ = -0,103R
+PÉRDIDA REAL       -0,5435 $ = -1,132R
+```
+
+El backtest asumía **−1,000R** por perdedora. La realidad es **13,2% más**:
+
+- **deslizamiento del stop: −0,029R.** El SL es una orden *stop-market*: se
+  dispara al tocar el nivel y se ejecuta al precio que haya, siempre peor. El
+  modelo suponía ejecución exacta en el nivel, que no ocurre nunca.
+- **comisiones: −0,103R.**
+
+→ Añadido `--deslizamiento` al backtest (por defecto 0,03R).
+
+### Y un detalle que cuesta dinero: los TP están a mercado
+
+En la configuración de TP/SL, el *precio de ejecución* de los parciales estaba
+en **"Precio de mercado"** → las salidas ganadoras también pagarán taker
+(0,06%). Bitget permite ponerlo a **límite**. Con ~55% de aciertos eso vale
+unos **+9R sobre 62 sesiones**. El SL no tiene remedio: es stop-market por
+definición.
 
 ---
 

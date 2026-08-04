@@ -20,7 +20,11 @@ Reglas de la simulacion (deliberadamente pesimistas)
 - Tras TP1 el SL sube a break-even (igual que en vivo).
 - La posicion se cierra al final de la sesion pase lo que pase (no hay overnight).
 - Solo una posicion por activo a la vez, y cooldown despues de cerrar.
-- No incluye comisiones ni slippage. El resultado real sera algo peor.
+- Comisiones incluidas (--comision), y DESLIZAMIENTO del SL (--deslizamiento):
+  el stop es una orden stop-market, se dispara al tocar el nivel y se ejecuta al
+  precio que haya, que siempre es peor. Medido en real: 0.029R.
+- Lo que sigue SIN modelarse: el spread real del libro. El backtest usa el
+  precio de las velas.
 
 USO:
   python tools/backtest.py                       # universo entero, 14 dias
@@ -46,7 +50,7 @@ CACHE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # ------------------------------------------------------------------
 # SIMULACION DEL RESULTADO
 # ------------------------------------------------------------------
-def simular(futuras, side, entrada, dist, cierre_sesion_et, cal):
+def simular(futuras, side, entrada, dist, cierre_sesion_et, cal, deslizamiento=0.0):
     """Recorre las velas posteriores y devuelve el resultado en R.
 
     Calcula a la vez el resultado con esquema VERDE (3 TPs 33/33/34) y ROJA
@@ -87,7 +91,12 @@ def simular(futuras, side, entrada, dist, cierre_sesion_et, cal):
         # PESIMISTA: si en la misma vela caben SL y TP, gana el SL
         if golpe_sl:
             sl_tocado = True
-            salida_r = 0.0 if be else -1.0
+            # DESLIZAMIENTO. El SL es una orden stop-MARKET: se dispara al tocar
+            # el nivel y se ejecuta al precio que haya, que siempre es peor.
+            # Medido en la operacion real #3 (AAPL, 4-ago-2026): stop en 309.80,
+            # ejecutado en 309.87 -> 0.029R de hueco. El backtest asumia que el
+            # SL se ejecuta exactamente en su nivel, que no pasa nunca.
+            salida_r = (0.0 if be else -1.0) - deslizamiento
             ts_salida = int(v[0])
             break
         if golpe_tp:
@@ -158,7 +167,8 @@ def buscar_fill(futuras, side, limite, espera):
     return None
 
 
-def recoger(sym, dias, paso, verbose=True, limite_bps=0.0, espera=6, usar_limite=True):
+def recoger(sym, dias, paso, verbose=True, limite_bps=0.0, espera=6, usar_limite=True,
+            deslizamiento=0.0):
     """Recorre el historial del activo y devuelve todas las candidatas con su
     resultado simulado. Los umbrales se ponen al minimo a proposito: filtrar
     viene despues, en memoria."""
@@ -239,7 +249,7 @@ def recoger(sym, dias, paso, verbose=True, limite_bps=0.0, espera=6, usar_limite
                                 # igual para poder medir cuantas te pierdes y si
                                 # eran mejores o peores que las que si entran.
                                 res_perdida = simular(futuras, ens["side"], precio,
-                                                      plan["dist"], cierra, cal)
+                                                      plan["dist"], cierra, cal, deslizamiento)
                                 candidatas.append({
                                     "sym": sym, "fecha": fecha, "hora": t.time(),
                                     "min_sesion": (t - abre).total_seconds() / 60.0,
@@ -259,7 +269,7 @@ def recoger(sym, dias, paso, verbose=True, limite_bps=0.0, espera=6, usar_limite
                         else:
                             entrada = precio
                         res = simular(futuras, ens["side"], entrada,
-                                      plan["dist"], cierra, cal)
+                                      plan["dist"], cierra, cal, deslizamiento)
                         candidatas.append({"lleno": True,
                             "sym": sym, "fecha": fecha, "hora": t.time(),
                             "min_sesion": (t - abre).total_seconds() / 60.0,
@@ -398,6 +408,8 @@ def main():
                     help="cuanto mejor que el precio de señal se pone el limite, en bps")
     ap.add_argument("--espera", type=int, default=6,
                     help="velas de 5m que se espera a que la limite se llene (6 = 30 min)")
+    ap.add_argument("--deslizamiento", type=float, default=0.03,
+                    help="cuanto peor se ejecuta el SL, en R (medido real: 0.029)")
     ap.add_argument("--tp-unico", action="store_true", dest="tp_unico",
                     help="cierra el 100%% en TP1 en vez de escalonar 33/33/34")
     ap.add_argument("--tf", default=None,
@@ -435,7 +447,8 @@ def main():
     todas = []
     for s in symbols:
         todas += recoger(s, a.dias, a.paso, limite_bps=a.limite_bps,
-                         espera=a.espera, usar_limite=not a.mercado)
+                         espera=a.espera, usar_limite=not a.mercado,
+                         deslizamiento=a.deslizamiento)
 
     if not todas:
         print("\nSin candidatas. ¿Historial suficiente?")
