@@ -5,11 +5,40 @@ lo que enseñan. Sirve para dos cosas: comprobar si el backtest se parece a la
 realidad, y acumular la muestra fuera de muestra que hace falta para decidir si
 el sistema tiene ventaja (faltan ~53 sesiones desde el 3-ago-2026).
 
-**Estado de la muestra: 1 operación.** No se puede concluir nada todavía.
+**Estado de la muestra: 2 operaciones.** No se puede concluir nada todavía.
 
 | # | Fecha | Activo | Lado | Entrada | Salida | R | Comisión |
 |---|---|---|---|---|---|---|---|
 | 1 | 3-ago-2026 | HOODUSDT | SHORT | 91,46 | 92,24 (SL) | **−1,00** | taker 0,0594% |
+| 2 | 4-ago-2026 | MSTRUSDT | SHORT | 95,23 | *abierta* | — | **maker 0,0200%** ✅ |
+
+---
+
+## ✅ RESUELTO: el maker es alcanzable (4-ago-2026)
+
+**Era la pregunta que decidía el proyecto entero.** Toda la rentabilidad calculada
+dependía de pagar 0,02% en vez de 0,06%, y no se podía saber desde el backtest:
+con velas de 5m se ve si el precio toca tu nivel, pero no si tu orden habría
+descansado en el libro.
+
+| Operación | Comisión | Posición | **Tasa** |
+|---|---|---|---|
+| HOOD, orden límite normal | 0,0356304 | $60,01 | **0,0594% = taker** |
+| MSTR, límite + **Post Only** | 0,00895162 | $44,76 | **0,0200% = maker** |
+
+Exacto, al cuarto decimal. **Tres veces más barato.**
+
+Lo que cambia: el escenario realista del sistema pasa de **+8,3%** por trimestre
+(`t = 0,46`, indistinguible de cero) a **+25,9%** (`t = 1,47`). Sigue sin ser
+estadísticamente concluyente, pero ahora hacen falta **115 sesiones** en total
+para saberlo, no los 4,9 años que salían con la configuración a taker.
+
+**Condición para que esto valga: Post Only siempre.** Una orden límite normal
+no basta — la #1 se puso con límite y pagó taker igualmente, porque cruzaba el
+mercado.
+
+**Falta medir**: cuántas órdenes Post Only rechaza Bitget. El backtest predice
+un 9,3% (a 1 bps). Si en la práctica es mucho más, hay que rehacer el cálculo.
 
 ---
 
