@@ -1,72 +1,5 @@
 {
-  "posiciones": [
-    {
-      "id": "NFLXUSDT-1785936735",
-      "sym": "NFLXUSDT",
-      "side": "long",
-      "entrada": 74.46,
-      "sl": 72.89466614476818,
-      "sl_ini": 72.89466614476818,
-      "tps": [
-        {
-          "r": 1.0,
-          "precio": 76.0253338552318
-        },
-        {
-          "r": 1.7,
-          "precio": 77.12106755389408
-        },
-        {
-          "r": 2.5,
-          "precio": 78.37333463807953
-        }
-      ],
-      "verde": true,
-      "setup": "BREAKOUT",
-      "estado": "activa",
-      "hitos": {
-        "tp1": false,
-        "tp2": false,
-        "tp3": false,
-        "sl": false,
-        "be": false
-      },
-      "abierta_ts": 1785936735
-    },
-    {
-      "id": "AVGOUSDT-1785936735",
-      "sym": "AVGOUSDT",
-      "side": "long",
-      "entrada": 425.82,
-      "sl": 417.7005998024395,
-      "sl_ini": 417.7005998024395,
-      "tps": [
-        {
-          "r": 1.0,
-          "precio": 433.9394001975605
-        },
-        {
-          "r": 1.7,
-          "precio": 439.6229803358528
-        },
-        {
-          "r": 2.5,
-          "precio": 446.1185004939012
-        }
-      ],
-      "verde": true,
-      "setup": "BREAKOUT",
-      "estado": "activa",
-      "hitos": {
-        "tp1": false,
-        "tp2": false,
-        "tp3": false,
-        "sl": false,
-        "be": false
-      },
-      "abierta_ts": 1785936735
-    }
-  ],
+  "posiciones": [],
   "historial": [
     {
       "id": "HOODUSDT-1785773340",
@@ -839,6 +772,76 @@
       "abierta_ts": 1785870232,
       "cierre": "SL",
       "cerrada_ts": 1785883425
+    },
+    {
+      "id": "NFLXUSDT-1785936735",
+      "sym": "NFLXUSDT",
+      "side": "long",
+      "entrada": 74.46,
+      "sl": 72.89466614476818,
+      "sl_ini": 72.89466614476818,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 76.0253338552318
+        },
+        {
+          "r": 1.7,
+          "precio": 77.12106755389408
+        },
+        {
+          "r": 2.5,
+          "precio": 78.37333463807953
+        }
+      ],
+      "verde": true,
+      "setup": "BREAKOUT",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1785936735,
+      "cierre": "FUERA_SESION",
+      "cerrada_ts": 1785960239
+    },
+    {
+      "id": "AVGOUSDT-1785936735",
+      "sym": "AVGOUSDT",
+      "side": "long",
+      "entrada": 425.82,
+      "sl": 417.7005998024395,
+      "sl_ini": 417.7005998024395,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 433.9394001975605
+        },
+        {
+          "r": 1.7,
+          "precio": 439.6229803358528
+        },
+        {
+          "r": 2.5,
+          "precio": 446.1185004939012
+        }
+      ],
+      "verde": true,
+      "setup": "BREAKOUT",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": true,
+        "be": false
+      },
+      "abierta_ts": 1785936735,
+      "cierre": "SL",
+      "cerrada_ts": 1785960239
     }
   ]
 }
