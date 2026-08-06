@@ -174,7 +174,7 @@ def seguir(enviar_tg=False, verbose=True):
                 p["estado"] = "cerrada"; p["cierre"] = "FIN_SESION"
                 avisos.append(
                     f"⏰ {_emoji(p['sym'], side)} — quedan {est_sym['para_cierre']:.0f} min para el "
-                    f"cierre ({est_sym['cierre'].strftime('%H:%M')} ET). CIERRA A MERCADO ahora "
+                    f"cierre ({est_sym['cierra'].strftime('%H:%M')} ET). CIERRA A MERCADO ahora "
                     f"(precio {price:g}). No se duerme la posicion.")
 
     # archiva las cerradas (marca la hora de cierre -> arranca el cooldown)

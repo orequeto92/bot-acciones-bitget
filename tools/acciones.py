@@ -392,8 +392,8 @@ def formatear(r):
     aligned_txt = f" HTF aligned +{C.HTF_BONUS}" if r["aligned"] else ""
     L.append(f"Motivo: [ENSEMBLE {ens['n_conf']}x] {partes} || Best={best['name']}: "
              f"{' + '.join(best['reasons'])}{aligned_txt}")
-    if not C.PERMITIR_OVERNIGHT and est.get("cierre"):
-        L.append(f"⏰ CERRAR antes de las {est['cierre'].strftime('%H:%M')} ET "
+    if not C.PERMITIR_OVERNIGHT and est.get("cierra"):
+        L.append(f"⏰ CERRAR antes de las {est['cierra'].strftime('%H:%M')} ET "
                  f"(no se duerme la posicion: el gap de mañana no se puede gestionar)")
     return "\n".join(L)
 
