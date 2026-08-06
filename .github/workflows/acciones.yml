@@ -22,8 +22,15 @@ name: Bot Acciones Bitget (servicio de sesion + Telegram)
 
 on:
   schedule:
-    - cron: "20 13 * * 1-5"     # tanda 1: desde antes de la apertura US
-    - cron: "0 19 * * 1-5"      # tanda 2: tramo final y cierre
+    # TANDAS RECORTADAS. Antes la tanda 1 duraba 350 min (13:20 -> 19:10 UTC) y
+    # la tanda 2 salia a las 19:00, pero `concurrency` la dejaba en cola detras
+    # de la 1; sumando el retraso habitual de Actions arrancaba a las 19:30-19:50
+    # y la ventana del cierre (20:00 UTC) se quedaba sin cubrir. Resultado: 5
+    # posiciones cerradas como FUERA_SESION, detectadas DESPUES de la campana en
+    # vez de avisadas antes. Ahora la tanda 1 termina a las 18:10 y la 2 arranca
+    # a las 18:15 con margen de sobra hasta el cierre.
+    - cron: "20 13 * * 1-5"     # tanda 1: apertura US -> 18:10 UTC (290 min)
+    - cron: "15 18 * * 1-5"     # tanda 2: 18:15 -> 20:35 UTC, cubre el cierre
     - cron: "0 7 * * 1-5"       # materias primas: manana europea
   workflow_dispatch:
     inputs:
@@ -60,7 +67,16 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python tools/servicio.py --intervalo 300 --minutos ${{ github.event.inputs.minutos || 350 }}
+        run: |
+          # Cada tanda vive lo justo para dejar sitio a la siguiente.
+          case "${{ github.event.schedule }}" in
+            "20 13 * * 1-5") MIN=290 ;;   # apertura -> 18:10 UTC
+            "15 18 * * 1-5") MIN=140 ;;   # 18:15 -> 20:35 UTC, cubre el cierre
+            "0 7 * * 1-5")   MIN=340 ;;   # materias primas
+            *)               MIN=${{ github.event.inputs.minutos || 290 }} ;;
+          esac
+          echo "servicio durante $MIN minutos"
+          python tools/servicio.py --intervalo 300 --minutos $MIN
 
       # if:always() para que el estado se guarde aunque el servicio muera por
       # timeout. `git add -A -- datos/` porque `git add` con varias rutas es

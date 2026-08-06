@@ -79,12 +79,25 @@ def registrar(resultados):
 
 # ----------------------------- seguimiento -----------------------------
 def _rango_reciente(sym, velas=5):
-    """max high / min low / ultimo cierre de las ultimas velas de 1m."""
-    k = bitget.klines(sym, C.TF_FOLLOW, velas)
-    hi = max(float(c[2]) for c in k)
-    lo = min(float(c[3]) for c in k)
-    last = float(k[-1][4])
-    return hi, lo, last
+    """max high / min low / ultimo cierre de las ultimas velas de 1m EN SESION.
+
+    EL FILTRO RTH ES OBLIGATORIO AQUI TAMBIEN. Sin el, despues del cierre esta
+    funcion lee precios de post-mercado y dispara TP/SL con ticks que no
+    existieron para ti. Caso real (AVGO, 5-ago-2026): el minimo EN SESION fue
+    417.75 y el SL estaba en 417.70 -> no salto, la sesion cerro en 418.75
+    (-0.87R). Pero a las 16:00, ya fuera de mercado, el precio bajo a 417.05 y
+    el bot canto "SL tocado, -1R". Registro falso, y si hubiese habido posicion
+    abierta el aviso mandaba cerrar a un precio inexistente.
+
+    Devuelve None si no hay velas en sesion (mercado cerrado).
+    """
+    cal = C.calendario_de(sym)
+    k = sesion.filtrar_rth(bitget.klines(sym, C.TF_FOLLOW, 60), cal)[-velas:]
+    if not k:
+        return None
+    return (max(float(c[2]) for c in k),
+            min(float(c[3]) for c in k),
+            float(k[-1][4]))
 
 def _emoji(sym, side):
     return f"{'🟢' if side == 'long' else '🔴'} {sym} {side.upper()}"
@@ -96,11 +109,24 @@ def seguir(enviar_tg=False, verbose=True):
     for p in d["posiciones"]:
         if p["estado"] != "activa":
             continue
+        est_sym = sesion.estado(C.calendario_de(p["sym"]))
         try:
-            hi, lo, price = _rango_reciente(p["sym"])
+            rango = _rango_reciente(p["sym"])
         except Exception as e:
             if verbose: print(f"  · {p['sym']}: error datos ({e})")
             continue
+        if rango is None or not est_sym["abierto"]:
+            # Mercado cerrado: NO se evaluan TP/SL (los precios de post-mercado
+            # no son operables). Se salta al bloque de cierre de sesion.
+            price = float(p["entrada"])
+            if p["estado"] == "activa" and not C.PERMITIR_OVERNIGHT:
+                p["estado"] = "cerrada"; p["cierre"] = "FUERA_SESION"
+                avisos.append(
+                    f"⚠️ {_emoji(p['sym'], p['side'])} — el mercado YA CERRO y la posicion "
+                    f"seguia abierta ({est_sym['motivo']}). Cierrala en cuanto puedas: "
+                    f"fuera de sesion el spread se dispara y mañana abre con gap.")
+            continue
+        hi, lo, price = rango
         side = p["side"]
         tps = p["tps"]
         # helper: ¿el precio alcanzo un nivel a favor?
@@ -143,20 +169,13 @@ def seguir(enviar_tg=False, verbose=True):
 
         # --- CIERRE DE SESION (esto no existe en cripto) ---
         if p["estado"] == "activa" and not C.PERMITIR_OVERNIGHT:
-            est = sesion.estado(C.calendario_de(p["sym"]))
-            if est["abierto"] and est["para_cierre"] is not None \
-                    and est["para_cierre"] <= C.CERRAR_ANTES_MIN:
+            if est_sym["para_cierre"] is not None \
+                    and est_sym["para_cierre"] <= C.CERRAR_ANTES_MIN:
                 p["estado"] = "cerrada"; p["cierre"] = "FIN_SESION"
                 avisos.append(
-                    f"⏰ {_emoji(p['sym'], side)} — quedan {est['para_cierre']:.0f} min para el "
-                    f"cierre ({est['cierre'].strftime('%H:%M')} ET). CIERRA A MERCADO ahora "
+                    f"⏰ {_emoji(p['sym'], side)} — quedan {est_sym['para_cierre']:.0f} min para el "
+                    f"cierre ({est_sym['cierre'].strftime('%H:%M')} ET). CIERRA A MERCADO ahora "
                     f"(precio {price:g}). No se duerme la posicion.")
-            elif not est["abierto"]:
-                p["estado"] = "cerrada"; p["cierre"] = "FUERA_SESION"
-                avisos.append(
-                    f"⚠️ {_emoji(p['sym'], side)} — el mercado YA CERRO y la posicion seguia "
-                    f"abierta ({est['motivo']}). Cierrala en cuanto puedas: fuera de sesion el "
-                    f"spread se dispara y manana abre con gap.")
 
     # archiva las cerradas (marca la hora de cierre -> arranca el cooldown)
     cerradas = [p for p in d["posiciones"] if p["estado"] == "cerrada"]

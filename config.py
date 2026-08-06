@@ -99,7 +99,13 @@ ORB_VALIDEZ_MIN = 120     # tras 2h el rango de apertura ya no manda; deja de op
 NO_ABRIR_ULTIMOS_MIN = 30
 # Aviso de cierre forzado antes de la campana. Dormir una posicion abierta es
 # regalar el gap de la manana siguiente con el spread de un mercado sin volumen.
-CERRAR_ANTES_MIN = 10
+#
+# SUBIDO DE 10 A 20 MIN. Con 10 minutos la ventana de aviso solo daba 2 ciclos
+# del servicio (que corre cada 5 min), y si el job justo arrancaba tarde se
+# perdia entera: el 5 y 6 de agosto aparecieron 5 cierres tipo FUERA_SESION,
+# o sea posiciones detectadas DESPUES de la campana en vez de avisadas antes.
+# Con 20 minutos hay 4 oportunidades.
+CERRAR_ANTES_MIN = 20
 PERMITIR_OVERNIGHT = False
 
 # Gap de apertura: por debajo de esto no es un gap, es ruido.
