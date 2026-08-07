@@ -1,5 +1,72 @@
 {
-  "posiciones": [],
+  "posiciones": [
+    {
+      "id": "AAPLUSDT-1786109700",
+      "sym": "AAPLUSDT",
+      "side": "short",
+      "entrada": 313.28,
+      "sl": 315.78623999999996,
+      "sl_ini": 315.78623999999996,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 310.77376
+        },
+        {
+          "r": 1.7,
+          "precio": 309.019392
+        },
+        {
+          "r": 2.5,
+          "precio": 307.01439999999997
+        }
+      ],
+      "verde": true,
+      "setup": "SMC_REVERSAL",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1786109700
+    },
+    {
+      "id": "NFLXUSDT-1786109700",
+      "sym": "NFLXUSDT",
+      "side": "long",
+      "entrada": 73.58,
+      "sl": 72.99136,
+      "sl_ini": 72.99136,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 74.16864
+        },
+        {
+          "r": 1.7,
+          "precio": 74.580688
+        },
+        {
+          "r": 2.5,
+          "precio": 75.0516
+        }
+      ],
+      "verde": true,
+      "setup": "LIQUIDITY_GRAB",
+      "estado": "activa",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1786109700
+    }
+  ],
   "historial": [
     {
       "id": "HOODUSDT-1785773340",
