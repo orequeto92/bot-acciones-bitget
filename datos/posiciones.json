@@ -1,72 +1,5 @@
 {
-  "posiciones": [
-    {
-      "id": "TSLAUSDT-1786023115",
-      "sym": "TSLAUSDT",
-      "side": "short",
-      "entrada": 317.3,
-      "sl": 323.97574007367876,
-      "sl_ini": 323.97574007367876,
-      "tps": [
-        {
-          "r": 1.0,
-          "precio": 310.62425992632126
-        },
-        {
-          "r": 1.7,
-          "precio": 305.95124187474613
-        },
-        {
-          "r": 2.5,
-          "precio": 300.61064981580313
-        }
-      ],
-      "verde": true,
-      "setup": "BREAKOUT",
-      "estado": "activa",
-      "hitos": {
-        "tp1": false,
-        "tp2": false,
-        "tp3": false,
-        "sl": false,
-        "be": false
-      },
-      "abierta_ts": 1786023115
-    },
-    {
-      "id": "NFLXUSDT-1786023115",
-      "sym": "NFLXUSDT",
-      "side": "long",
-      "entrada": 74.69,
-      "sl": 73.26189904881872,
-      "sl_ini": 73.26189904881872,
-      "tps": [
-        {
-          "r": 1.0,
-          "precio": 76.11810095118128
-        },
-        {
-          "r": 1.7,
-          "precio": 77.11777161700817
-        },
-        {
-          "r": 2.5,
-          "precio": 78.2602523779532
-        }
-      ],
-      "verde": true,
-      "setup": "BREAKOUT",
-      "estado": "activa",
-      "hitos": {
-        "tp1": false,
-        "tp2": false,
-        "tp3": false,
-        "sl": false,
-        "be": false
-      },
-      "abierta_ts": 1786023115
-    }
-  ],
+  "posiciones": [],
   "historial": [
     {
       "id": "HOODUSDT-1785773340",
@@ -909,6 +842,76 @@
       "abierta_ts": 1785936735,
       "cierre": "SL",
       "cerrada_ts": 1785960239
+    },
+    {
+      "id": "TSLAUSDT-1786023115",
+      "sym": "TSLAUSDT",
+      "side": "short",
+      "entrada": 317.3,
+      "sl": 323.97574007367876,
+      "sl_ini": 323.97574007367876,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 310.62425992632126
+        },
+        {
+          "r": 1.7,
+          "precio": 305.95124187474613
+        },
+        {
+          "r": 2.5,
+          "precio": 300.61064981580313
+        }
+      ],
+      "verde": true,
+      "setup": "BREAKOUT",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1786023115,
+      "cierre": "FUERA_SESION",
+      "cerrada_ts": 1786067628
+    },
+    {
+      "id": "NFLXUSDT-1786023115",
+      "sym": "NFLXUSDT",
+      "side": "long",
+      "entrada": 74.69,
+      "sl": 73.26189904881872,
+      "sl_ini": 73.26189904881872,
+      "tps": [
+        {
+          "r": 1.0,
+          "precio": 76.11810095118128
+        },
+        {
+          "r": 1.7,
+          "precio": 77.11777161700817
+        },
+        {
+          "r": 2.5,
+          "precio": 78.2602523779532
+        }
+      ],
+      "verde": true,
+      "setup": "BREAKOUT",
+      "estado": "cerrada",
+      "hitos": {
+        "tp1": false,
+        "tp2": false,
+        "tp3": false,
+        "sl": false,
+        "be": false
+      },
+      "abierta_ts": 1786023115,
+      "cierre": "FUERA_SESION",
+      "cerrada_ts": 1786067628
     }
   ]
 }
