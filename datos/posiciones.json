@@ -38,7 +38,7 @@
       "sym": "NFLXUSDT",
       "side": "long",
       "entrada": 73.58,
-      "sl": 72.99136,
+      "sl": 73.58,
       "sl_ini": 72.99136,
       "tps": [
         {
@@ -58,11 +58,11 @@
       "setup": "LIQUIDITY_GRAB",
       "estado": "activa",
       "hitos": {
-        "tp1": false,
+        "tp1": true,
         "tp2": false,
         "tp3": false,
         "sl": false,
-        "be": false
+        "be": true
       },
       "abierta_ts": 1786109700
     }
